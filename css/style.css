@@ -1,0 +1,1024 @@
+/* =============================================================
+   中国诗词人·荣耀世界 — Style Sheet
+   典雅清丽 · 宣纸底色 · 古典气质
+   ============================================================= */
+
+/* ---------- CSS Reset / Base ---------- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Serif SC', 'SimSun', serif;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #2C2C2C;
+  background-color: #F5F0E8;
+  /* 宣纸纹理模拟 */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(210, 195, 170, 0.08) 2px,
+      rgba(210, 195, 170, 0.08) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(200, 185, 160, 0.05) 3px,
+      rgba(200, 185, 160, 0.05) 6px
+    );
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Noto Serif SC', 'PingFang SC', 'SimSun', serif;
+  color: #1A1A1A;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+a {
+  color: #2D7DB5;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #C93B3B;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+/* ---------- Header ---------- */
+.header {
+  text-align: center;
+  padding: 32px 20px 20px;
+  background: rgba(245, 240, 232, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(44, 44, 44, 0.08);
+  position: relative;
+  z-index: 10;
+}
+
+.site-title {
+  font-size: 1.75rem;
+  letter-spacing: 6px;
+  color: #1A1A1A;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.site-subtitle {
+  font-size: 0.9rem;
+  color: #8A8078;
+  letter-spacing: 8px;
+  font-family: 'PingFang SC', 'Microsoft YaHei', serif;
+  font-weight: 300;
+}
+
+/* ---------- Tier Tabs ---------- */
+.tier-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 16px;
+  background: rgba(245, 240, 232, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  min-height: 52px;
+}
+
+.tier-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* 流动背景滑块 — 替代下划线指示条，在Tab之间滑动 */
+.tier-bg-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 18px;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.tier-bg-slider--animated {
+  transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+}
+
+.tier-tab {
+  flex-shrink: 0;
+  padding: 6px 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6B6560;
+  border-radius: 20px;
+  transition: color 0.35s ease;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  border: none;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.tier-tab small {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0.55;
+  letter-spacing: 2px;
+  margin-top: 1px;
+}
+
+.tier-tab:hover {
+  color: #2C2C2C;
+}
+
+.tier-tab.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 段位色 — active 状态（仅文字颜色，背景由 slider 处理） */
+.tier-tab[data-tier="最强王者"].active { color: #fff; }
+.tier-tab[data-tier="至尊星耀"].active { color: #fff; }
+.tier-tab[data-tier="永恒钻石"].active { color: #fff; }
+.tier-tab[data-tier="尊贵铂金"].active { color: #fff; }
+.tier-tab[data-tier="荣耀黄金"].active { color: #fff; }
+
+/* ---------- Sphere Container ---------- */
+.sphere-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-height: 480px;
+  position: relative;
+}
+
+#sphereCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+  border-radius: 12px;
+}
+
+/* ---------- Footer ---------- */
+.footer-bar {
+  text-align: center;
+  padding: 14px 20px;
+  background: rgba(245, 240, 232, 0.90);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(44, 44, 44, 0.08);
+  font-size: 0.85rem;
+  color: #6B6560;
+  letter-spacing: 2px;
+}
+
+.footer-info {
+  display: inline-block;
+}
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(44, 44, 44, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.30s ease;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  background: #FDFAF5;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(44, 44, 44, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideUp 0.35s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #8A8078;
+  background: rgba(245, 240, 232, 0.8);
+  border-radius: 50%;
+  transition: all 0.25s ease;
+  z-index: 10;
+  border: none;
+}
+
+.modal-close:hover {
+  color: #C93B3B;
+  background: rgba(201, 59, 59, 0.10);
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 28px 28px 32px;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========= Modal Internal Sections ========= */
+
+/* 每个内容区块 */
+.modal-section {
+  margin-bottom: 28px;
+}
+
+.modal-section:last-child {
+  margin-bottom: 0;
+}
+
+/* 区块标题 */
+.modal-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  letter-spacing: 2px;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+  border-bottom: 2px solid rgba(201, 59, 59, 0.20);
+  position: relative;
+}
+
+.modal-section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 48px;
+  height: 2px;
+  background: #C93B3B;
+}
+
+/* 基本信息区域 */
+.modal-bio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  padding: 12px 16px;
+  background: rgba(245, 240, 232, 0.50);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: #4A4440;
+}
+
+.modal-bio span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.modal-bio .label {
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+/* 雷达图区域 */
+.modal-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+#radarCanvas {
+  display: block;
+  width: 240px;
+  height: 240px;
+}
+
+/* 技能卡片网格 */
+.modal-skills {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* 卡片翻转容器 */
+.skill-card-flip {
+  perspective: 800px;
+  position: relative;
+  border-left: 3px solid #C93B3B;
+  background: #FDFAF5;
+  border-radius: 0 10px 10px 0;
+  cursor: pointer;
+  min-height: 120px;
+  transition: box-shadow 0.3s;
+}
+
+.skill-card-flip:hover {
+  box-shadow: 0 4px 16px rgba(44,44,44,0.06);
+}
+
+/* 正面和背面共享属性 */
+.card-front, .card-back {
+  backface-visibility: hidden;
+  transition: transform 0.5s ease;
+  padding: 12px 14px;
+}
+
+/* 正面 */
+.card-front {
+  transform: rotateY(0deg);
+}
+
+/* 背面 */
+.card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: rotateY(180deg);
+  overflow-y: auto;
+}
+
+.card-back .skill-header {
+  justify-content: center;
+  gap: 10px;
+}
+
+/* 翻转状态 */
+.skill-card-flip.flipped .card-front {
+  transform: rotateY(180deg);
+  pointer-events: none;
+}
+
+.skill-card-flip.flipped .card-back {
+  transform: rotateY(0deg);
+}
+
+/* 卡片通用元素 */
+.skill-card-flip .skill-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.skill-card-flip .skill-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+.skill-card-flip .skill-type {
+  font-size: 0.65rem;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* 正面名句 */
+.card-quotes {
+  margin: 4px 0;
+}
+
+.card-quote {
+  font-family: 'STKaiti','KaiTi','Noto Serif SC',serif;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 2px 0;
+  letter-spacing: 0.5px;
+}
+
+/* 点评 */
+.skill-card-flip .skill-comment {
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 0.76rem;
+  color: #8A8078;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+/* 翻转提示 */
+.flip-hint {
+  font-size: 0.65rem;
+  color: #B8B0A8;
+  margin: 6px 0 0;
+  letter-spacing: 1px;
+}
+
+.flip-hint.back {
+  margin-top: 8px;
+}
+
+/* 背面诗词原文 */
+.card-poem {
+  margin-top: 6px;
+}
+
+.poem-line {
+  font-family: 'STKaiti','KaiTi','Noto Serif SC',serif;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #2C2C2C;
+  margin: 0;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.poem-line.hl {
+  background: linear-gradient(180deg, transparent 55%, rgba(201,59,59,0.12) 55%);
+  font-weight: 600;
+  color: #C93B3B;
+}
+
+/* 名句展示 */
+.modal-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quote-block {
+  padding: 14px 18px;
+  background: rgba(245, 240, 232, 0.40);
+  border-left: 3px solid #C93B3B;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: #3A3430;
+  position: relative;
+}
+
+.quote-block::before {
+  content: '\201C';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-size: 2rem;
+  color: rgba(201, 59, 59, 0.15);
+  line-height: 1;
+}
+
+.quote-block .quote-source {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-style: normal;
+  color: #8A8078;
+  text-align: right;
+}
+
+/* 关系网络 */
+.modal-relationships {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.relation-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(45, 125, 181, 0.08);
+  border: 1px solid rgba(45, 125, 181, 0.15);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  color: #2D7DB5;
+  transition: all 0.25s ease;
+}
+
+.relation-item:hover {
+  background: rgba(45, 125, 181, 0.15);
+  transform: translateY(-1px);
+}
+
+.relation-item .relation-name {
+  font-weight: 500;
+}
+
+.relation-item .relation-type {
+  color: #8A8078;
+  font-size: 0.75rem;
+}
+
+/* 故事/典故 */
+.modal-stories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-stories .story-item {
+  padding: 12px 16px;
+  background: rgba(245, 240, 232, 0.30);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: #4A4440;
+}
+
+.modal-stories .story-item .story-title {
+  font-weight: 600;
+  color: #2C2C2C;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+/* ========= Modal Header Section ========= */
+.modal-header-section {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.modal-poet-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 4px;
+}
+
+.modal-poet-title {
+  font-size: 0.85rem;
+  color: #6A6460;
+  background: rgba(44, 44, 44, 0.06);
+  padding: 4px 14px;
+  border-radius: 20px;
+  letter-spacing: 2px;
+}
+
+.bio-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bio-label {
+  font-weight: 600;
+  color: #2C2C2C;
+  margin-right: 4px;
+}
+
+.bio-desc {
+  width: 100%;
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #6A6460;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.tier-badge {
+  display: inline-block;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  letter-spacing: 1px;
+}
+
+/* ========= Stats + Keydata 两栏布局 ========= */
+.modal-stats-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.modal-stats-row .modal-stats {
+  flex: 0 0 auto;
+}
+
+.modal-keydata {
+  flex: 1;
+  min-width: 160px;
+}
+
+.keydata-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.keydata-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(245, 240, 232, 0.4);
+  border-radius: 8px;
+  font-size: 0.84rem;
+}
+
+.keydata-label {
+  color: #6A6460;
+  font-weight: 500;
+}
+
+.keydata-value {
+  color: #2C2C2C;
+  font-weight: 600;
+}
+
+.keyword-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  color: #6A6460;
+  background: rgba(44, 44, 44, 0.06);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 2px 3px;
+}
+
+/* ========= 流派阵营 ========= */
+.school-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.school-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.school-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6A6460;
+  min-width: 40px;
+}
+
+.school-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  padding: 3px 12px;
+  border: 1px solid;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.5);
+  letter-spacing: 1px;
+}
+
+/* ========= 技能卡片增强 ========= */
+.skill-desc {
+  font-size: 0.82rem;
+  color: #6A6460;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* 旧样式已迁移至卡片翻转系统 */
+
+/* ========= 名句增强 ========= */
+.quote-text {
+  font-size: 1rem;
+  line-height: 1.9;
+  color: #3A3430;
+  margin: 0 0 4px;
+  letter-spacing: 0.5px;
+}
+
+.quote-source {
+  display: block;
+  font-size: 0.78rem;
+  font-style: normal;
+  color: #8A8078;
+  text-align: right;
+  margin: 0;
+}
+
+/* ========= 关系网络增强 ========= */
+.relation-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(44, 44, 44, 0.04);
+  border: 1px solid rgba(44, 44, 44, 0.1);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  transition: all 0.25s ease;
+}
+
+.relation-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(44, 44, 44, 0.06);
+}
+
+.relation-type {
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.relation-target {
+  font-weight: 500;
+  color: #2C2C2C;
+}
+
+.relation-label {
+  color: #8A8078;
+  font-size: 0.75rem;
+}
+
+/* ========= 故事增强 ========= */
+.story-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.story-keyword {
+  display: inline-block;
+  font-size: 0.78rem;
+  color: #4A4440;
+  padding: 4px 12px;
+  border-radius: 14px;
+  letter-spacing: 1px;
+}
+
+.story-anecdote-wrap {
+  padding: 14px 18px;
+  border-left: 3px solid #C93B3B;
+  background: rgba(245, 240, 232, 0.35);
+  border-radius: 0 10px 10px 0;
+  margin-top: 4px;
+}
+
+.story-anecdote {
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: #3A3430;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- Typography 增强 ---------- */
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 1rem; }
+
+p {
+  margin-bottom: 0.8em;
+}
+
+/* ---------- Responsive ---------- */
+
+/* 768px 及以下 */
+@media (max-width: 768px) {
+
+  .header {
+    padding: 24px 16px 16px;
+  }
+
+  .site-title {
+    font-size: 1.35rem;
+    letter-spacing: 4px;
+  }
+
+  .site-subtitle {
+    font-size: 0.80rem;
+    letter-spacing: 6px;
+  }
+
+  .tier-tabs {
+    justify-content: flex-start;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .tier-tab {
+    padding: 7px 16px;
+    font-size: 0.80rem;
+  }
+
+  .sphere-container {
+    padding: 12px;
+    min-height: 360px;
+  }
+
+  #sphereCanvas {
+    min-height: 340px;
+  }
+
+  /* Modal 全屏 */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    animation: modalSlideUpMobile 0.35s ease;
+  }
+
+  @keyframes modalSlideUpMobile {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal-body {
+    padding: 24px 20px 28px;
+  }
+
+  .modal-close {
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .modal-skills {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #radarCanvas {
+    width: 200px;
+    height: 200px;
+  }
+
+  .footer-bar {
+    padding: 12px 16px;
+    font-size: 0.80rem;
+  }
+}
+
+/* 480px 及以下 */
+@media (max-width: 480px) {
+
+  .header {
+    padding: 20px 12px 14px;
+  }
+
+  .site-title {
+    font-size: 1.15rem;
+    letter-spacing: 3px;
+  }
+
+  .site-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 4px;
+  }
+
+  .tier-tabs {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .tier-tab {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    border-radius: 16px;
+  }
+
+  .sphere-container {
+    padding: 8px;
+    min-height: 300px;
+  }
+
+  #sphereCanvas {
+    min-height: 280px;
+  }
+
+  .modal-body {
+    padding: 20px 16px 24px;
+  }
+
+  .modal-section-title {
+    font-size: 0.92rem;
+  }
+
+  .modal-skills {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .skill-card-flip {
+    min-height: 100px;
+  }
+
+  .modal-bio {
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  #radarCanvas {
+    width: 160px;
+    height: 160px;
+  }
+
+  .quote-block {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+
+  .relation-item {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
+
+  .footer-bar {
+    padding: 10px 12px;
+    font-size: 0.75rem;
+  }
+}

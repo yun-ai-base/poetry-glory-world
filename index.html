@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中国诗词人·荣耀世界</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 顶部标题栏 -->
+  <header class="header">
+    <h1 class="site-title">中国诗词人·荣耀世界</h1>
+    <p class="site-subtitle">千年诗韵，星河璀璨</p>
+  </header>
+
+  <!-- 段位切换 Tab -->
+  <nav class="tier-tabs" id="tierTabs">
+    <div class="tier-bg-slider" id="tierBgSlider"></div>
+    <button class="tier-tab active" data-tier="最强王者">最强王者<br><small>朱砂红</small></button>
+    <button class="tier-tab" data-tier="至尊星耀">至尊星耀<br><small>天 青</small></button>
+    <button class="tier-tab" data-tier="永恒钻石">永恒钻石<br><small>东方既白</small></button>
+    <button class="tier-tab" data-tier="尊贵铂金">尊贵铂金<br><small>秋香色</small></button>
+    <button class="tier-tab" data-tier="荣耀黄金">荣耀黄金<br><small>暮山紫</small></button>
+  </nav>
+
+  <!-- 3D球体 Canvas 容器 -->
+  <main class="sphere-container">
+    <canvas id="sphereCanvas"></canvas>
+  </main>
+
+  <!-- 底部状态栏 -->
+  <footer class="footer-bar" id="footerBar">
+    <span class="footer-info" id="tierInfo">最强王者 · 共10位诗人</span>
+  </footer>
+
+  <!-- 详情弹窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-body" id="modalBody">
+        <!-- 由JS动态填充 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 脚本 -->
+  <script src="js/poets-data.js"></script>
+  <script src="js/sphere3d.js"></script>
+  <script src="js/radar-chart.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

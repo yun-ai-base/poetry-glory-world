@@ -89,6 +89,9 @@
     this._proximityEdges = null;
     // 事件
     this._handlers = {};
+    // 缩放
+    this._pinchDist = 0;
+    this._pinchRadius = 0;
 
     // 逻辑尺寸（实际用于绘制的像素）
     this.width = 0;
@@ -119,7 +122,9 @@
     this.height = h;
 
     if (!this.radius || this.radius <= 0) {
-      this.radius = Math.min(w, h) * 0.35;
+      // 移动端（< 768px）使用更小的球体，避免节点重叠
+      var isMobile = w < 768;
+      this.radius = Math.min(w, h) * (isMobile ? 0.28 : 0.35);
     }
   };
 
@@ -271,9 +276,44 @@
     window.addEventListener('mouseup', h.mouseup);
     c.addEventListener('mouseleave', h.mouseleave);
 
-    h.touchstart = function (e) { e.preventDefault(); var t = e.touches[0]; self._onDown(self._getPos(t.clientX, t.clientY)); };
-    h.touchmove = function (e) { e.preventDefault(); var t = e.touches[0]; self._onMove(self._getPos(t.clientX, t.clientY)); };
+    h.touchstart = function (e) {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        // 双指缩放开始
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        self._pinchDist = Math.sqrt(dx*dx + dy*dy);
+        self._pinchRadius = self.radius;
+        self._dragging = false;
+        self._dragDist = 999;
+        return;
+      }
+      var t = e.touches[0];
+      self._onDown(self._getPos(t.clientX, t.clientY));
+    };
+    h.touchmove = function (e) {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        // 双指缩放
+        var dx = e.touches[0].clientX - e.touches[1].clientX;
+        var dy = e.touches[0].clientY - e.touches[1].clientY;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        var scale = dist / self._pinchDist;
+        var newR = self._pinchRadius * scale;
+        newR = Math.max(60, Math.min(500, newR)); // 限制范围
+        if (Math.abs(newR - self.radius) > 2) {
+          self.radius = newR;
+          self.focalLength = newR * 2;
+          self._initNodes();
+          self._buildProximityConnections();
+        }
+        return;
+      }
+      var t = e.touches[0];
+      self._onMove(self._getPos(t.clientX, t.clientY));
+    };
     h.touchend = function (e) {
+      if (e.touches.length > 0) return; // 还有手指在屏幕上
       if (e.changedTouches && e.changedTouches[0]) {
         var t = e.changedTouches[0];
         self._onUp(self._getPos(t.clientX, t.clientY));

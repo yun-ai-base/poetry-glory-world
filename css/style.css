@@ -200,6 +200,23 @@ button {
   border-radius: 12px;
 }
 
+/* 双指缩放提示 */
+.sphere-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: #8A8078;
+  opacity: 0;
+  pointer-events: none;
+  letter-spacing: 2px;
+  transition: opacity 0.8s ease;
+}
+.sphere-hint.show {
+  opacity: 0.7;
+}
+
 /* ---------- Footer ---------- */
 .footer-bar {
   text-align: center;
@@ -384,6 +401,8 @@ button {
   cursor: pointer;
   min-height: 120px;
   transition: box-shadow 0.3s;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 
 .skill-card-flip:hover {
@@ -400,6 +419,7 @@ button {
 /* 正面 */
 .card-front {
   transform: rotateY(0deg);
+  pointer-events: auto;
 }
 
 /* 背面 */
@@ -411,6 +431,7 @@ button {
   bottom: 0;
   transform: rotateY(180deg);
   overflow-y: auto;
+  pointer-events: none;
 }
 
 .card-back .skill-header {
@@ -426,6 +447,7 @@ button {
 
 .skill-card-flip.flipped .card-back {
   transform: rotateY(0deg);
+  pointer-events: auto;
 }
 
 /* 卡片通用元素 */
@@ -543,6 +565,54 @@ button {
   font-style: normal;
   color: #8A8078;
   text-align: right;
+}
+
+/* 名句翻转卡片 */
+.quote-flip {
+  perspective: 800px;
+  position: relative;
+  border-left: 3px solid #C93B3B;
+  background: rgba(245, 240, 232, 0.40);
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  min-height: 72px;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+.quote-flip:hover {
+  box-shadow: 0 2px 8px rgba(44,44,44,0.06);
+}
+.quote-front, .quote-back {
+  backface-visibility: hidden;
+  transition: transform 0.5s ease;
+  padding: 14px 18px;
+}
+.quote-front {
+  transform: rotateY(0deg);
+  pointer-events: auto;
+}
+.quote-back {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  transform: rotateY(180deg);
+  overflow-y: auto;
+  pointer-events: none;
+  border-left: 3px solid #C93B3B;
+}
+.quote-flip.flipped .quote-front {
+  transform: rotateY(180deg);
+  pointer-events: none;
+}
+.quote-flip.flipped .quote-back {
+  transform: rotateY(0deg);
+  pointer-events: auto;
+}
+.quote-poem-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
 }
 
 /* 关系网络 */
@@ -936,8 +1006,21 @@ p {
   }
 
   .footer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
     padding: 12px 16px;
     font-size: 0.80rem;
+  }
+
+  .sphere-container {
+    padding-bottom: 56px;
+  }
+
+  .sphere-hint.show {
+    opacity: 0.6;
   }
 }
 
@@ -964,13 +1047,13 @@ p {
   }
 
   .tier-tab {
-    padding: 6px 14px;
+    padding: 6px 8px;
     font-size: 0.75rem;
     border-radius: 16px;
   }
 
   .sphere-container {
-    padding: 8px;
+    padding: 8px 8px 56px;
     min-height: 300px;
   }
 

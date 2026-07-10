@@ -34,6 +34,25 @@
     return TIER_CONFIG[tier] || TIER_CONFIG['最强王者'];
   }
 
+  /** 根据名句的 source 找到关联 skill（获取完整诗文） */
+  function findQuoteSkill(poet, quote) {
+    if (!poet.skills) return null;
+    var target = quote.source.replace(/[《》]/g, '');
+    // 精确匹配
+    for (var i = 0; i < poet.skills.length; i++) {
+      if (poet.skills[i].name === target) return poet.skills[i];
+    }
+    // 前缀匹配（处理"声声慢"→"声声慢·寻寻觅觅"）
+    for (var i = 0; i < poet.skills.length; i++) {
+      if (poet.skills[i].name.startsWith(target)) return poet.skills[i];
+    }
+    // 包容匹配（处理"饮酒·其五"→"饮酒（其五）"）
+    for (var i = 0; i < poet.skills.length; i++) {
+      if (poet.skills[i].name.indexOf(target) >= 0 || target.indexOf(poet.skills[i].name) >= 0) return poet.skills[i];
+    }
+    return null;
+  }
+
   function setActiveTab(tier) {
     var activeTab = null;
     tierTabs.forEach(function (tab) {
@@ -45,11 +64,9 @@
       }
     });
     if (tierBgSlider && activeTab) {
-      var navRect = tierTabsNav.getBoundingClientRect();
-      var tabRect = activeTab.getBoundingClientRect();
       var config = getTierConfig(tier);
-      tierBgSlider.style.left = (tabRect.left - navRect.left) + 'px';
-      tierBgSlider.style.width = tabRect.width + 'px';
+      tierBgSlider.style.left = activeTab.offsetLeft + 'px';
+      tierBgSlider.style.width = activeTab.offsetWidth + 'px';
       tierBgSlider.style.background = config.color;
     }
   }
@@ -147,7 +164,7 @@
       poet.skills.forEach(function (skill) {
         var typeLabel = skill.type;
         var typeCls = skill.type === '大招' ? 'skill-ultimate' : (skill.type === '主动技' ? 'skill-active' : 'skill-passive');
-        html += '  <div class="skill-card-flip" onclick="this.classList.toggle(\'flipped\')" style="border-left-color:' + config.color + '">';
+        html += '  <div class="skill-card-flip" data-flip-card style="border-left-color:' + config.color + '">';
         // --- 正面 ---
         html += '    <div class="card-front">';
         html += '      <div class="skill-header"><span class="skill-name">' + skill.name + '</span><span class="skill-type" style="background:' + config.color + '">' + typeLabel + '</span></div>';
@@ -186,15 +203,57 @@
       html += '</div>';
     }
 
-    // 代表诗句
-    if (poet.famousQuotes && poet.famousQuotes.length) {
+    // 代表诗句（合并 famousQuotes + skill 高亮句，全部展示可翻转看全文）
+    var expandedQuotes = [];
+    if (poet.famousQuotes) {
+      poet.famousQuotes.forEach(function (q) { expandedQuotes.push(q); });
+    }
+    if (poet.skills) {
+      poet.skills.forEach(function (s) {
+        if (!s.highlights) return;
+        s.highlights.forEach(function (h) {
+          var dup = false;
+          for (var eq = 0; eq < expandedQuotes.length; eq++) {
+            if (expandedQuotes[eq].text === h) { dup = true; break; }
+          }
+          if (!dup) {
+            expandedQuotes.push({ text: h, source: '《' + s.name + '》', _skill: s });
+          }
+        });
+      });
+    }
+    if (expandedQuotes.length) {
       html += '<div class="modal-section">';
-      html += '  <h3 class="modal-section-title">代表诗句</h3>';
+      html += '  <h3 class="modal-section-title">代表诗句 <span style="font-size:0.7rem;font-weight:400;color:#8A8078;letter-spacing:0">点击翻转看全文</span></h3>';
       html += '  <div class="modal-quotes">';
-      poet.famousQuotes.forEach(function (q) {
-        html += '  <div class="quote-block" style="border-left-color:' + config.color + '">';
-        html += '    <p class="quote-text">「' + q.text + '」</p>';
-        html += '    <p class="quote-source">—— ' + q.source + '</p>';
+      expandedQuotes.forEach(function (q) {
+        var skill = q._skill || findQuoteSkill(poet, q);
+        var sourceClean = q.source.replace(/[《》]/g, '');
+        html += '  <div class="quote-flip" data-flip-quote style="border-left-color:' + config.color + '">';
+        // 正面
+        html += '    <div class="quote-front">';
+        html += '      <p class="quote-text">「' + q.text + '」</p>';
+        html += '      <p class="quote-source">—— ' + q.source + '</p>';
+        html += '      <p class="flip-hint">点击翻转</p>';
+        html += '    </div>';
+        // 背面
+        html += '    <div class="quote-back" style="border-left-color:' + config.color + '">';
+        html += '      <p class="quote-poem-title" style="color:' + config.color + '">' + sourceClean + '</p>';
+        if (skill && skill.poem) {
+          var poemLines = skill.poem.split('。');
+          for (var li = 0; li < poemLines.length; li++) {
+            var l = poemLines[li].trim(); if (!l) continue;
+            var isHL = false;
+            for (var h2 = 0; h2 < (skill.highlights || []).length; h2++) {
+              if (l.indexOf(skill.highlights[h2]) >= 0 || (skill.highlights[h2] && skill.highlights[h2].indexOf(l) >= 0)) { isHL = true; break; }
+            }
+            html += isHL ? '      <p class="poem-line hl">' + l + '。</p>' : '      <p class="poem-line">' + l + '。</p>';
+          }
+        } else {
+          html += '      <p class="poem-line" style="color:#8A8078;font-style:italic">（完整诗词未收录）</p>';
+        }
+        html += '      <p class="flip-hint back">翻转返回</p>';
+        html += '    </div>';
         html += '  </div>';
       });
       html += '  </div>';
@@ -239,6 +298,7 @@
     modalBody.innerHTML = html;
     modalOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
+    canvas.style.pointerEvents = 'none';
 
     setTimeout(function () {
       var radarCanvas = document.getElementById('radarCanvas');
@@ -251,6 +311,7 @@
   function closeModal() {
     modalOverlay.classList.remove('active');
     document.body.style.overflow = '';
+    canvas.style.pointerEvents = '';
   }
 
   // ===== 事件绑定 =====
@@ -264,6 +325,14 @@
   modalClose.addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', function (e) {
     if (e.target === modalOverlay) closeModal();
+  });
+  // 卡片翻转：事件委托 + 阻止冒泡，避免穿透 overlay 触发 canvas
+  modalBody.addEventListener('click', function (e) {
+    var card = e.target.closest('[data-flip-card], [data-flip-quote]');
+    if (card) {
+      e.stopPropagation();
+      card.classList.toggle('flipped');
+    }
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeModal();
@@ -286,6 +355,14 @@
         setActiveTab('最强王者');
         if (tierBgSlider) tierBgSlider.classList.add('tier-bg-slider--animated');
       }, 100);
+      // 移动端双指缩放提示
+      if (window.innerWidth < 768) {
+        var hint = document.getElementById('sphereHint');
+        if (hint) {
+          hint.classList.add('show');
+          setTimeout(function () { hint.classList.remove('show'); }, 3000);
+        }
+      }
     } catch (e) {
       console.error('初始化失败:', e);
     }

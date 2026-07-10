@@ -121,11 +121,9 @@
     this.width = w;
     this.height = h;
 
-    if (!this.radius || this.radius <= 0) {
-      // 移动端（< 768px）使用更小的球体，避免节点重叠
-      var isMobile = w < 768;
-      this.radius = Math.min(w, h) * (isMobile ? 0.28 : 0.35);
-    }
+    var isMobile = w < 768;
+    this._isMobile = isMobile;
+    this.radius = Math.min(w, h) * (isMobile ? 0.46 : 0.35);
   };
 
   PoetSphere.prototype._buildRelationMap = function () {
@@ -458,9 +456,9 @@
 
       // Z 深度: -R(最近) ~ +R(最远)
       var depth = (node.z + R) / (R * 2);
-      node.size = 22 + scale * 32;  // 22~54px
+      node.size = (this._isMobile ? 16 : 22) + scale * (this._isMobile ? 22 : 32);
       node.opacity = 0.35 + 0.65 * (1 - depth);
-      node.showName = node.z < R * 0.25;
+      node.showName = node.z < R * (this._isMobile ? 0.15 : 0.25);
     }
 
     // Z 排序：远→近

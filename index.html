@@ -33,6 +33,8 @@
   <!-- 底部状态栏 -->
   <footer class="footer-bar" id="footerBar">
     <span class="footer-info" id="tierInfo">最强王者 · 共10位诗人</span>
+    <span class="footer-sep">|</span>
+    <span class="footer-twin-btn" onclick="toggleTwin()">🌌 孪生宇宙</span>
   </footer>
 
   <!-- 详情弹窗 -->
@@ -45,10 +47,95 @@
     </div>
   </div>
 
+  <!-- 孪生宇宙弹窗 -->
+  <div class="twin-overlay" id="twinView" onclick="if(event.target===this)toggleTwin()">
+    <div class="twin-panel">
+      <button class="twin-close" onclick="toggleTwin()">✕</button>
+      <div class="twin-header">
+        <h2>🌌 诗词孪生宇宙</h2>
+        <p class="twin-subtitle">点击见大世界</p>
+      </div>
+      <div class="twin-body" id="twinContainer"></div>
+    </div>
+  </div>
+
   <!-- 脚本 -->
   <script src="js/poets-data.js"></script>
   <script src="js/sphere3d.js"></script>
   <script src="js/radar-chart.js"></script>
   <script src="js/app.js"></script>
+
+  <script>
+// ═══ 孪生宇宙 ═══
+var SELF_PROJECT = 'poetry-glory-world';
+var PROJECTS_URL = 'https://yun-ai-base.github.io/psychscope/projects.json';
+var TWIN_CATS = {
+  ai:       { label: 'AI 对话',   emoji: '🤖' },
+  tool:     { label: '工具',      emoji: '🛠️' },
+  content:  { label: '内容精选',  emoji: '📖' }
+};
+var TWIN_ORDER = ['ai', 'tool', 'content'];
+var twinBuilt = false;
+
+function toggleTwin() {
+  var v = document.getElementById('twinView');
+  v.classList.toggle('open');
+  document.body.style.overflow = v.classList.contains('open') ? 'hidden' : '';
+  if (v.classList.contains('open') && !twinBuilt) {
+    twinBuilt = true;
+    buildTwin();
+  }
+}
+
+function buildTwin() {
+  var container = document.getElementById('twinContainer');
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', PROJECTS_URL, true);
+  xhr.onload = function () {
+    if (xhr.status !== 200) return;
+    try {
+      var all = JSON.parse(xhr.responseText);
+      var projects = all.filter(function (p) { return p.name !== SELF_PROJECT; });
+      var byCat = {};
+      projects.forEach(function (s) { (byCat[s.cat] = byCat[s.cat] || []).push(s); });
+      var html = '';
+      TWIN_ORDER.forEach(function (cat) {
+        var list = byCat[cat];
+        if (!list) return;
+        var info = TWIN_CATS[cat];
+        html += '<div class="twin-section">'
+             + '<div class="twin-section-title">' + info.emoji + ' ' + info.label + '</div>'
+             + '<div class="twin-grid">';
+        list.forEach(function (s) {
+          html += '<a class="twin-card" href="https://yun-ai-base.github.io/' + encodeURIComponent(s.name) + '/" target="_blank" rel="noopener">'
+               + '<span class="twin-card-icon">' + s.icon + '</span>'
+               + '<span class="twin-card-info">'
+               + '<span class="twin-card-name">' + escHtml(s.name) + '</span>'
+               + '<span class="twin-card-desc">' + escHtml(s.desc) + '</span>'
+               + '</span>'
+               + '<span class="twin-card-arrow">→</span>'
+               + '</a>';
+        });
+        html += '</div></div>';
+      });
+      container.innerHTML = html;
+    } catch (e) {}
+  };
+  xhr.send();
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && document.getElementById('twinView').classList.contains('open')) {
+    toggleTwin();
+  }
+});
+  </script>
 </body>
 </html>

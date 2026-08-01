@@ -85,9 +85,9 @@
 
   /** 时代匹配：按 dynasty 字段做包含式映射（简化，含"唐"即归隋唐等） */
   var ERA_RULES = [
-    ['先秦', /战国|楚/],
+    ['先秦', /先秦|战国|楚|诗经/],
     ['两汉', /汉/],
-    ['魏晋南北朝', /魏|晋|南朝|陈|梁|齐/],
+    ['魏晋南北朝', /魏|晋|南朝|南北朝|陈|梁|齐/],
     ['五代', /五代|南唐/],
     ['隋唐', /隋|唐/],
     ['宋', /宋/],
@@ -129,6 +129,120 @@
     if (searchInput) searchInput.value = '';
     if (eraSelect) eraSelect.value = '全部';
     applyFilter();
+  }
+
+  // ===== 视图切换（球体 / 时间线）=====
+  var ERA_YEARS = {
+    '先秦': '约前770 — 前221',
+    '两汉': '前202 — 220',
+    '魏晋南北朝': '220 — 589',
+    '隋唐': '581 — 907',
+    '五代': '907 — 960',
+    '宋': '960 — 1279',
+    '元': '1271 — 1368',
+    '明': '1368 — 1644',
+    '清': '1644 — 1912',
+    '近代': '1912 — 1949'
+  };
+  var timelineBuilt = false;
+
+  /** 解析生卒年字符串为数值（"约前340"→-340，"701"→701，失败→null） */
+  function parseYear(str) {
+    if (!str) return null;
+    var s = String(str);
+    var neg = s.indexOf('前') >= 0;
+    s = s.replace(/约|年左右|前后|年|初|中|末|早期|晚期|前/g, '').trim();
+    var n = parseInt(s, 10);
+    if (isNaN(n)) return null;
+    return neg ? -n : n;
+  }
+
+  /** 诗人所属时代（第一个匹配的 ERA_RULES） */
+  function getPoetEra(poet) {
+    var d = ((poet.basicInfo || {}).dynasty) || '';
+    for (var i = 0; i < ERA_RULES.length; i++) {
+      if (ERA_RULES[i][1].test(d)) return ERA_RULES[i][0];
+    }
+    return '其他';
+  }
+
+  /** 排序用年份：优先出生年，其次死亡年，再按时代中值，最后末尾 */
+  function poetYear(poet) {
+    var y = parseYear((poet.basicInfo || {}).birthYear);
+    if (y != null) return y;
+    y = parseYear((poet.basicInfo || {}).deathYear);
+    if (y != null) return y;
+    return 1e7;
+  }
+
+  function buildTimeline() {
+    var container = document.getElementById('timelineScroll');
+    if (!container) return;
+    var eras = ERA_RULES.map(function (r) { return r[0]; }).concat(['其他']);
+    var groups = {};
+    eras.forEach(function (e) { groups[e] = []; });
+    ALL_POETS.forEach(function (p) {
+      var era = getPoetEra(p);
+      groups[era].push({ p: p, y: poetYear(p) });
+    });
+    var html = '';
+    eras.forEach(function (e) {
+      var list = groups[e].slice().sort(function (a, b) { return a.y - b.y; });
+      if (!list.length) return;
+      var cfg = getTierConfig(list[0].p.tier);
+      html += '<div class="timeline-era">';
+      html += '  <div class="timeline-era-head">'
+            + '<span class="timeline-era-name" style="color:' + cfg.color + '">' + e + '</span>'
+            + '<span class="timeline-era-years">' + (ERA_YEARS[e] || '') + '</span>'
+            + '<span class="timeline-era-count">' + list.length + ' 位</span>'
+            + '</div>';
+      html += '  <div class="timeline-era-poets">';
+      list.forEach(function (it) {
+        var p = it.p;
+        var c = getTierConfig(p.tier);
+        html += '<button class="timeline-poet" data-poet-name="' + p.name + '"'
+              + ' style="border-color:' + c.color + ';color:' + c.color + '"'
+              + ' title="' + (((p.basicInfo || {}).dynasty) || '') + ' · ' + (((p.basicInfo || {}).birthYear) || '?') + '—' + (((p.basicInfo || {}).deathYear) || '?') + '">'
+              + p.name + '</button>';
+      });
+      html += '  </div>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+    // 委托点击
+    if (!container._timelineBound) {
+      container._timelineBound = true;
+      container.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-poet-name]');
+        if (!btn) return;
+        var name = btn.getAttribute('data-poet-name');
+        var target = ALL_POETS.find(function (p) { return p.name === name; });
+        if (target) showPoetDetail(target);
+      });
+    }
+  }
+
+  function setView(view) {
+    var sphereC = document.querySelector('.sphere-container');
+    var tl = document.getElementById('timelineView');
+    var isSphere = view === 'sphere';
+    if (sphereC) sphereC.style.display = isSphere ? '' : 'none';
+    if (tl) tl.hidden = isSphere;
+    document.querySelectorAll('.view-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
+    if (isSphere) {
+      if (sphere) sphere.start();
+    } else {
+      if (sphere) sphere.stop();
+      if (!timelineBuilt) { timelineBuilt = true; buildTimeline(); }
+    }
+  }
+
+  function bindViewEvents() {
+    document.querySelectorAll('.view-btn').forEach(function (b) {
+      b.addEventListener('click', function () { setView(b.dataset.view); });
+    });
   }
 
   function bindFilterEvents() {
@@ -363,14 +477,18 @@
     // 关系网络
     if (poet.relationships && poet.relationships.length) {
       html += '<div class="modal-section">';
-      html += '  <h3 class="modal-section-title">关系网络</h3>';
+      html += '  <h3 class="modal-section-title">关系网络 <span style="font-size:0.7rem;font-weight:400;color:#8A8078;letter-spacing:0">点击诗人可跳转</span></h3>';
       html += '  <div class="modal-relationships">';
       poet.relationships.forEach(function (rel) {
-        html += '  <div class="relation-item" style="border-color:' + config.color + '40">';
+        var linked = ALL_POETS.some(function (p) { return p.name === rel.target; });
+        var tag = linked ? 'button' : 'div';
+        html += '  <' + tag + ' class="relation-item' + (linked ? ' relation-link' : '') + '"'
+              + (linked ? ' data-rel-target="' + rel.target + '"' : '')
+              + ' style="border-color:' + config.color + '40">';
         html += '    <span class="relation-type" style="color:' + config.color + '">' + rel.type + '</span>';
         html += '    <span class="relation-target">' + rel.target + '</span>';
         html += '    <span class="relation-label">' + rel.label + '</span>';
-        html += '  </div>';
+        html += '  </' + tag + '>';
       });
       html += '  </div>';
       html += '</div>';
@@ -561,8 +679,19 @@
   modalOverlay.addEventListener('click', function (e) {
     if (e.target === modalOverlay) closeModal();
   });
-  // 卡片翻转 + 导出按钮：事件委托 + 阻止冒泡，避免穿透 overlay 触发 canvas
+  // 卡片翻转 + 导出按钮 + 关系跳转：事件委托 + 阻止冒泡
   modalBody.addEventListener('click', function (e) {
+    var relBtn = e.target.closest('[data-rel-target]');
+    if (relBtn) {
+      e.stopPropagation();
+      var tName = relBtn.getAttribute('data-rel-target');
+      var target = ALL_POETS.find(function (p) { return p.name === tName; });
+      if (target) {
+        closeModal();
+        setTimeout(function () { showPoetDetail(target); }, 60);
+      }
+      return;
+    }
     var exportBtn = e.target.closest('[data-action="export-poet"]');
     if (exportBtn) {
       e.stopPropagation();
@@ -647,6 +776,8 @@
 
   // 绑定搜索与筛选（脚本在 body 末尾执行，DOM 已就绪）
   bindFilterEvents();
+  // 绑定视图切换（球体 / 时间线）
+  bindViewEvents();
 
   // 供孪生宇宙弹窗（index.html 内联脚本）同步球体交互状态，
   // 防止弹窗内点击经 window 级 mouseup 误触发诗人节点

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://yun-ai-base.github.io; font-src 'self' data:; base-uri 'self'; form-action 'none'">
   <title>中国诗词人·荣耀世界</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='6' fill='%231a1a2e'/%3E%3Ccircle cx='16' cy='12' r='5' fill='%23f0d68a'/%3E%3Ccircle cx='18' cy='10' r='3' fill='%231a1a2e'/%3E%3Cpath d='M5 26 Q10 16 16 20 Q22 24 27 18' stroke='%23e8c87a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3Ctext x='16' y='28' text-anchor='middle' font-size='6' fill='%23e8c87a' font-family='serif'%3E诗%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
@@ -42,6 +43,10 @@
       <option value="近代">近代</option>
     </select>
     <button id="clearFilter" class="clear-btn" title="清除筛选" aria-label="清除筛选">✕</button>
+    <div class="view-toggle" role="group" aria-label="视图切换">
+      <button class="view-btn active" data-view="sphere" title="球体视图" aria-label="球体视图">🌐</button>
+      <button class="view-btn" data-view="timeline" title="时间线视图" aria-label="时间线视图">🕐</button>
+    </div>
   </div>
 
   <!-- 3D球体 Canvas 容器 -->
@@ -49,6 +54,11 @@
     <canvas id="sphereCanvas"></canvas>
     <p class="sphere-hint" id="sphereHint">双指缩放</p>
   </main>
+
+  <!-- 历史时间线视图（与球体视图互斥显示） -->
+  <div class="timeline-view" id="timelineView" hidden>
+    <div class="timeline-scroll" id="timelineScroll"></div>
+  </div>
 
   <!-- 底部状态栏 -->
   <footer class="footer-bar" id="footerBar">
@@ -88,89 +98,6 @@
   <script src="js/sphere3d.js"></script>
   <script src="js/radar-chart.js"></script>
   <script src="js/app.js"></script>
-
-  <script>
-// ═══ 孪生宇宙 ═══
-var SELF_PROJECT = 'poetry-glory-world';
-var PROJECTS_URL = 'https://yun-ai-base.github.io/psychscope/projects.json';
-var TWIN_CATS = {
-  ai:       { label: 'AI 对话',   emoji: '🤖' },
-  tool:     { label: '工具',      emoji: '🛠️' },
-  content:  { label: '内容精选',  emoji: '📖' }
-};
-var TWIN_ORDER = ['ai', 'tool', 'content'];
-var twinBuilt = false;
-
-function toggleTwin() {
-  var v = document.getElementById('twinView');
-  var willOpen = !v.classList.contains('open');
-  v.classList.toggle('open');
-  document.body.style.overflow = willOpen ? 'hidden' : '';
-  // 弹窗打开时关闭球体交互，防止点击穿透误触发诗人节点
-  if (window.__pgw) window.__pgw.setSphereInteractive(!willOpen);
-  if (willOpen && !twinBuilt) {
-    twinBuilt = true;
-    buildTwin();
-  }
-}
-
-function buildTwin() {
-  var container = document.getElementById('twinContainer');
-  function fail() {
-    if (container) {
-      container.innerHTML = '<div class="twin-fallback">🌫 其他项目暂时无法加载（网络或服务异常）</div>';
-    }
-  }
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', PROJECTS_URL, true);
-  xhr.timeout = 8000;
-  xhr.onload = function () {
-    if (xhr.status !== 200) { fail(); return; }
-    try {
-      var all = JSON.parse(xhr.responseText);
-      var projects = all.filter(function (p) { return p.name !== SELF_PROJECT; });
-      var byCat = {};
-      projects.forEach(function (s) { (byCat[s.cat] = byCat[s.cat] || []).push(s); });
-      var html = '';
-      TWIN_ORDER.forEach(function (cat) {
-        var list = byCat[cat];
-        if (!list) return;
-        var info = TWIN_CATS[cat];
-        html += '<div class="twin-section">'
-             + '<div class="twin-section-title">' + info.emoji + ' ' + info.label + '</div>'
-             + '<div class="twin-grid">';
-        list.forEach(function (s) {
-          html += '<a class="twin-card" href="https://yun-ai-base.github.io/' + encodeURIComponent(s.name) + '/" target="_blank" rel="noopener noreferrer">'
-               + '<span class="twin-card-icon">' + s.icon + '</span>'
-               + '<span class="twin-card-info">'
-               + '<span class="twin-card-name">' + escHtml(s.name) + '</span>'
-               + '<span class="twin-card-desc">' + escHtml(s.desc) + '</span>'
-               + '</span>'
-               + '<span class="twin-card-arrow">→</span>'
-               + '</a>';
-        });
-        html += '</div></div>';
-      });
-      container.innerHTML = html || '<div class="twin-fallback">暂未发现其他项目</div>';
-    } catch (e) { fail(); }
-  };
-  xhr.onerror = fail;
-  xhr.ontimeout = fail;
-  xhr.send();
-}
-
-function escHtml(s) {
-  if (!s) return '';
-  var d = document.createElement('div');
-  d.appendChild(document.createTextNode(s));
-  return d.innerHTML;
-}
-
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape' && document.getElementById('twinView').classList.contains('open')) {
-    toggleTwin();
-  }
-});
-  </script>
+  <script src="js/twin-universe.js"></script>
 </body>
 </html>

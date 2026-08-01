@@ -61,6 +61,13 @@
     if (options.size !== undefined) opts.size = options.size;
     if (options.maxValue !== undefined) opts.maxValue = options.maxValue;
 
+    // ---- 主题感知配色（浅色宣纸 / 暗色墨韵）----
+    var isDark = document.documentElement &&
+      document.documentElement.getAttribute('data-theme') === 'dark';
+    var COL = isDark
+      ? { grid: 'rgba(255,255,255,0.08)', axis: 'rgba(255,255,255,0.12)', tick: '#7a7466', label: '#9b9486' }
+      : { grid: 'rgba(44,44,44,0.08)', axis: 'rgba(44,44,44,0.12)', tick: '#B0A898', label: '#6A6460' };
+
     var ctx = canvas.getContext('2d');
 
     // ---- DPR 适配 ----
@@ -124,7 +131,7 @@
         }
       }
       ctx.closePath();
-      ctx.strokeStyle = 'rgba(44,44,44,0.08)';
+      ctx.strokeStyle = COL.grid;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -138,7 +145,7 @@
       ctx.beginPath();
       ctx.moveTo(center, center);
       ctx.lineTo(endX, endY);
-      ctx.strokeStyle = 'rgba(44,44,44,0.12)';
+      ctx.strokeStyle = COL.axis;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -146,7 +153,7 @@
     // ================================================================
     // 3. 绘制刻度标注（沿第一条轴线标注 2,4,6,8,10）
     // ================================================================
-    ctx.fillStyle = '#B0A898';
+    ctx.fillStyle = COL.tick;
     ctx.font = '10px "PingFang SC","Microsoft YaHei",sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -250,7 +257,7 @@
       var lx = center + (radius + labelOffset) * Math.cos(ang);
       var ly = center + (radius + labelOffset) * Math.sin(ang);
 
-      ctx.fillStyle = '#6A6460';
+      ctx.fillStyle = COL.label;
       ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
 
       // ---- 文字水平对齐 ----

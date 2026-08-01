@@ -793,7 +793,8 @@
 
     // ===== 姓名（放在球体节点中心） =====
     if (node.showName) {
-      var nameFontSize = Math.max(12, Math.min(16, bodyRadius * 0.42));
+      // 字号：桌面稍大（13~18px），移动端上限 16px（节点小，由比例控制，避免溢出）
+      var nameFontSize = Math.max(13, Math.min(this._isMobile ? 16 : 18, bodyRadius * 0.46));
       ctx.font = 'bold ' + nameFontSize + 'px ' + this.fontFamily;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

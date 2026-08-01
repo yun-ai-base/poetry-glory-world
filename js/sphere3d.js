@@ -51,6 +51,16 @@
     return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + Math.max(0, Math.min(1, alpha)) + ')';
   }
 
+  /** WCAG 2.x 相对亮度（0~1），用于文字颜色自适应对比度决策 */
+  function relativeLuminance(hex) {
+    var c = parseColor(hex);
+    function lin(v) {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    }
+    return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+  }
+
   // ============================================================
   // PoetSphere 主类
   // ============================================================
@@ -819,16 +829,26 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 深色阴影让文字清晰
-      ctx.shadowColor = 'rgba(0,0,0,0.7)';
-      ctx.shadowBlur = 6;
-      ctx.fillStyle = '#FFFFFF';
+      // 文字颜色按段位色亮度自适应（科学对比度 + 国风审美）：
+      // 亮度 > 0.26 的浅色段位（天青/东方既白/秋香色）用深墨字，
+      // 深色段位（朱砂红/暮山紫）用白字——浅底白字对比度不足（<3:1）
+      var useDarkText = relativeLuminance(this.tierColor) > 0.26;
+      ctx.fillStyle = useDarkText ? '#20243A' : '#FFFFFF';
+      if (useDarkText) {
+        // 深字：白色柔光晕（浅色底上描边提锐）
+        ctx.shadowColor = 'rgba(255,255,255,0.85)';
+        ctx.shadowBlur = 5;
+      } else {
+        // 白字：深色阴影保证任意背景下可读
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+        ctx.shadowBlur = 6;
+      }
       ctx.fillText(node.poet.name, sx, sy);
       ctx.shadowBlur = 0;
 
-      // 再描一层细边增强可读性
+      // 细描边增强边缘
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.strokeStyle = useDarkText ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.15)';
       ctx.strokeText(node.poet.name, sx, sy);
     }
 

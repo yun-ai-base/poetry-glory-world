@@ -98,12 +98,18 @@
     // 缩放
     this._pinchDist = 0;
     this._pinchRadius = 0;
+    // 动画时间（驱动呼吸/光点流动/星点闪烁）
+    this._time = 0;
+    this._lastTime = 0;
+    // 背景星点
+    this._stars = [];
 
     // 逻辑尺寸（实际用于绘制的像素）
     this.width = 0;
     this.height = 0;
 
     this._initSize();
+    this._buildStars();
     this._buildRelationMap();
     this._initNodes();
     this._buildProximityConnections();
@@ -130,6 +136,51 @@
     var isMobile = w < 768;
     this._isMobile = isMobile;
     this.radius = Math.min(w, h) * (isMobile ? 0.46 : 0.35);
+  };
+
+  PoetSphere.prototype._buildStars = function () {
+    var stars = [];
+    var R = this.radius;
+    for (var i = 0; i < 40; i++) {
+      var theta = Math.random() * Math.PI * 2;
+      var phi = Math.acos(2 * Math.random() - 1);
+      var r = R * (1.9 + Math.random() * 1.3);
+      stars.push({
+        x: r * Math.sin(phi) * Math.cos(theta),
+        y: r * Math.cos(phi),
+        z: r * Math.sin(phi) * Math.sin(theta),
+        s: 0.7 + Math.random() * 1.4,   // 大小
+        tw: Math.random() * Math.PI * 2 // 闪烁相位
+      });
+    }
+    this._stars = stars;
+  };
+
+  /** 背景星点：随球体旋转投影，营造深邃空间感 */
+  PoetSphere.prototype._drawStars = function (ctx) {
+    var stars = this._stars;
+    if (!stars || !stars.length) return;
+    var cx = this.width / 2, cy = this.height / 2;
+    var R = this.radius, focal = R * 2;
+    for (var i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      var ry = rotateY(st.x, st.z, this.rotationY);
+      var rx = rotateX(st.y, ry[1], this.rotationX);
+      var z = rx[1];
+      if (z > R * 1.2) continue; // 星点只画在球体后方一半（前方让位给球体）
+      var scale = focal / (focal + z + R);
+      var sx = cx + ry[0] * scale;
+      var sy = cy + rx[0] * scale;
+      var depth = (z + R * 2.6) / (R * 2.6);
+      var twinkle = 0.45 + 0.55 * Math.sin(this._time * 2.2 + st.tw);
+      var alpha = (0.25 + 0.5 * (1 - depth)) * twinkle;
+      if (alpha <= 0.02) continue;
+      var r = Math.max(0.6, st.s * scale);
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
+      ctx.fill();
+    }
   };
 
   PoetSphere.prototype._buildRelationMap = function () {
@@ -253,6 +304,7 @@
 
   PoetSphere.prototype.resize = function () {
     this._initSize();
+    this._buildStars();
     this._initNodes();
     this._buildProximityConnections();
   };
@@ -446,6 +498,11 @@
   // 更新
   // ==========================================================
   PoetSphere.prototype._update = function () {
+    // 时间累加（按真实时间，驱动呼吸/光点/星点动画）
+    var now = Date.now();
+    if (this._lastTime) this._time += (now - this._lastTime) / 1000;
+    this._lastTime = now;
+
     // 自动旋转
     if (!this._dragging) {
       this.rotationY += this.autoRotateSpeed;
@@ -501,6 +558,9 @@
     var sorted = this._sortedNodes;
     if (!sorted || sorted.length === 0) return;
 
+    // 0a. 背景星点（深邃空间感）
+    this._drawStars(ctx);
+
     // 0. 球体骨架线（经纬线，让3D球体视觉成型）
     this._drawSphereFrame(ctx);
 
@@ -555,8 +615,10 @@
         ctx.lineWidth = 0.8;
         ctx.stroke();
       };
-      drawHalf(back, 0.15);
-      drawHalf(front, 0.35);
+      // 呼吸动效：透明度随时间缓动，让框架"活"起来
+      var breathe = 0.78 + 0.22 * Math.sin(self._time * 1.5);
+      drawHalf(back, 0.15 * breathe);
+      drawHalf(front, 0.38 * breathe);
     }
 
     // 纬线（水平环）
@@ -641,6 +703,39 @@
         ctx.stroke();
       }
     }
+
+    // ---- 能量流光点：沿连线流动，增强"大立体球"的动感 ----
+    if (edges && edges.length && this._time > 0.02) {
+      var speed = 0.32;
+      var flowCount = Math.min(22, Math.floor(edges.length / 3) + 6);
+      var cx = this.width / 2, cy = this.height / 2;
+      var R = this.radius;
+      for (var k = 0; k < flowCount; k++) {
+        // 随时间轮换选取不同边，配合相位错开，形成持续流动
+        var ei = Math.floor((k + Math.floor(this._time * 10)) % edges.length);
+        var ea = this.nodes[edges[ei].a];
+        var eb = this.nodes[edges[ei].b];
+        if (!ea || !eb) continue;
+        var t = ((this._time * speed) + k * 0.413) % 1;
+        var px = ea.sx + (eb.sx - ea.sx) * t;
+        var py = ea.sy + (eb.sy - ea.sy) * t;
+        var midZ = (ea.z + eb.z) / 2;
+        var dd = (midZ + R) / (R * 2);
+        var pulse = 0.55 + 0.45 * Math.sin(this._time * 6 + k * 1.7);
+        var alpha = Math.max(0, 0.55 * (1 - dd) * pulse);
+        if (alpha <= 0.04) continue;
+        var gr = 1.2 + 0.8 * (1 - dd);
+        ctx.beginPath();
+        ctx.arc(px, py, gr, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
+        ctx.fill();
+        // 微光晕
+        ctx.beginPath();
+        ctx.arc(px, py, gr * 2.4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.25).toFixed(3) + ')';
+        ctx.fill();
+      }
+    }
   };
 
   PoetSphere.prototype._drawNode = function (ctx, node) {
@@ -678,21 +773,43 @@
     ctx.fillStyle = cg;
     ctx.fill();
 
-    // 主体圆形（半透明底色，让名字更清晰）
+    // 球面光照：节点法线（旋转后 3D 位置）· 光源方向（屏幕右上前方）
+    var nLen = Math.sqrt(node.x * node.x + node.y * node.y + node.z * node.z) || 1;
+    var nx = node.x / nLen, ny = node.y / nLen, nz = node.z / nLen;
+    var ldx = 0.55, ldy = -0.38, ldz = 0.75;
+    var lLen = Math.sqrt(ldx * ldx + ldy * ldy + ldz * ldz);
+    var dot = (nx * ldx + ny * ldy + nz * ldz) / lLen;
+    var light = 0.66 + 0.34 * Math.max(0, dot); // 0.66(背光) ~ 1.0(迎光)
+
+    // 主体圆形（径向渐变模拟球体体积：受光面亮 → 背光面暗）
+    var baseC = parseColor(this.tierColor);
+    var shaded = function (f) {
+      return 'rgba(' + Math.min(255, Math.round(baseC.r * light * f)) + ','
+           + Math.min(255, Math.round(baseC.g * light * f)) + ','
+           + Math.min(255, Math.round(baseC.b * light * f)) + ','
+           + Math.min(0.9, finalOpa * 0.85) + ')';
+    };
+    var bodyGrad = ctx.createRadialGradient(sx - bodyRadius * 0.34, sy - bodyRadius * 0.34, bodyRadius * 0.1, sx, sy, bodyRadius);
+    bodyGrad.addColorStop(0, shaded(1.15));
+    bodyGrad.addColorStop(0.55, shaded(0.88));
+    bodyGrad.addColorStop(1, shaded(0.48));
     ctx.beginPath();
     ctx.arc(sx, sy, bodyRadius, 0, Math.PI * 2);
-    ctx.fillStyle = colorWithAlpha(this.tierColor, Math.min(0.85, finalOpa * 0.85));
+    ctx.fillStyle = bodyGrad;
     ctx.fill();
+    // 描边
     ctx.beginPath();
     ctx.arc(sx, sy, bodyRadius, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(255,255,255,' + (finalOpa * 0.3) + ')';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.2;
     ctx.stroke();
 
-    // 高光（左上角小亮点）
+    // 高光（随光源方向偏移的右上小亮点，亮暗随光照）
+    var hx = sx + bodyRadius * 0.32;
+    var hy = sy - bodyRadius * 0.32;
     ctx.beginPath();
-    ctx.arc(sx - bodyRadius * 0.2, sy - bodyRadius * 0.2, bodyRadius * 0.2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,' + (finalOpa * 0.35) + ')';
+    ctx.arc(hx, hy, bodyRadius * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,' + (finalOpa * 0.5 * (0.55 + 0.45 * light)) + ')';
     ctx.fill();
 
     // ===== 姓名（放在球体节点中心） =====

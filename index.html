@@ -64,7 +64,7 @@
   <footer class="footer-bar" id="footerBar">
     <span class="footer-info" id="tierInfo">最强王者 · 共10位诗人</span>
     <span class="footer-sep">|</span>
-    <span class="footer-twin-btn" onclick="toggleTwin()">🌌 孪生宇宙 <small style="font-size:0.7em;opacity:0.6;font-weight:400">点击见大世界</small></span>
+    <span class="footer-twin-btn" id="footerTwinBtn">🌌 孪生宇宙 <small style="font-size:0.7em;opacity:0.6;font-weight:400">点击见大世界</small></span>
     <span class="footer-sep">|</span>
     <span class="theme-toggle" id="themeToggle" role="button" tabindex="0" aria-label="切换主题">🌙</span>
   </footer>
@@ -80,9 +80,9 @@
   </div>
 
   <!-- 孪生宇宙弹窗 -->
-  <div class="twin-overlay" id="twinView" onclick="if(event.target===this)toggleTwin()">
+  <div class="twin-overlay" id="twinView">
     <div class="twin-panel">
-      <button class="twin-close" onclick="toggleTwin()">✕</button>
+      <button class="twin-close" id="twinCloseBtn">✕</button>
       <div class="twin-header">
         <h2>🌌 诗词孪生宇宙</h2>
         <p class="twin-subtitle">我的其他项目 · 点击跳转</p>

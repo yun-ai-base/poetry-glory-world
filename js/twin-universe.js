@@ -91,6 +91,28 @@
     }
   });
 
+  // 事件绑定（CSP script-src 'self' 禁内联 onclick，必须用 addEventListener）
+  function bindTwinEvents() {
+    var footerBtn = document.getElementById('footerTwinBtn');
+    if (footerBtn) footerBtn.addEventListener('click', toggleTwin);
+
+    var closeBtn = document.getElementById('twinCloseBtn');
+    if (closeBtn) closeBtn.addEventListener('click', toggleTwin);
+
+    var overlay = document.getElementById('twinView');
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) toggleTwin(); // 点击遮罩关闭
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindTwinEvents);
+  } else {
+    bindTwinEvents();
+  }
+
   // 暴露给 index.html 内联 onclick 使用
   window.toggleTwin = toggleTwin;
   window.buildTwin = buildTwin;

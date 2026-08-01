@@ -773,43 +773,22 @@
     ctx.fillStyle = cg;
     ctx.fill();
 
-    // 球面光照：节点法线（旋转后 3D 位置）· 光源方向（屏幕右上前方）
-    var nLen = Math.sqrt(node.x * node.x + node.y * node.y + node.z * node.z) || 1;
-    var nx = node.x / nLen, ny = node.y / nLen, nz = node.z / nLen;
-    var ldx = 0.55, ldy = -0.38, ldz = 0.75;
-    var lLen = Math.sqrt(ldx * ldx + ldy * ldy + ldz * ldz);
-    var dot = (nx * ldx + ny * ldy + nz * ldz) / lLen;
-    var light = 0.66 + 0.34 * Math.max(0, dot); // 0.66(背光) ~ 1.0(迎光)
-
-    // 主体圆形（径向渐变模拟球体体积：受光面亮 → 背光面暗）
-    var baseC = parseColor(this.tierColor);
-    var shaded = function (f) {
-      return 'rgba(' + Math.min(255, Math.round(baseC.r * light * f)) + ','
-           + Math.min(255, Math.round(baseC.g * light * f)) + ','
-           + Math.min(255, Math.round(baseC.b * light * f)) + ','
-           + Math.min(0.9, finalOpa * 0.85) + ')';
-    };
-    var bodyGrad = ctx.createRadialGradient(sx - bodyRadius * 0.34, sy - bodyRadius * 0.34, bodyRadius * 0.1, sx, sy, bodyRadius);
-    bodyGrad.addColorStop(0, shaded(1.15));
-    bodyGrad.addColorStop(0.55, shaded(0.88));
-    bodyGrad.addColorStop(1, shaded(0.48));
+    // 主体圆形（纯色半透明底色，恢复原版色调；3D 立体感由
+    // 骨架/连线/光点/星点/高光共同营造，避免光照渐变把段位色弄脏）
     ctx.beginPath();
     ctx.arc(sx, sy, bodyRadius, 0, Math.PI * 2);
-    ctx.fillStyle = bodyGrad;
+    ctx.fillStyle = colorWithAlpha(this.tierColor, Math.min(0.85, finalOpa * 0.85));
     ctx.fill();
-    // 描边
     ctx.beginPath();
     ctx.arc(sx, sy, bodyRadius, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(255,255,255,' + (finalOpa * 0.3) + ')';
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // 高光（随光源方向偏移的右上小亮点，亮暗随光照）
-    var hx = sx + bodyRadius * 0.32;
-    var hy = sy - bodyRadius * 0.32;
+    // 高光（左上角小亮点，保留立体点睛）
     ctx.beginPath();
-    ctx.arc(hx, hy, bodyRadius * 0.22, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,' + (finalOpa * 0.5 * (0.55 + 0.45 * light)) + ')';
+    ctx.arc(sx - bodyRadius * 0.2, sy - bodyRadius * 0.2, bodyRadius * 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,' + (finalOpa * 0.35) + ')';
     ctx.fill();
 
     // ===== 姓名（放在球体节点中心） =====
@@ -819,23 +798,17 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 文字渲染：强黑阴影 + 粗黑描边 + 白字填充
-      // 经典 UI 文字技法——在任何彩色/半透明/重叠背景下都保持稳定可读
-      // （科学对比度在单一背景上成立，但实际节点有半透明叠加、白描边、光照变化，
-      //  深字方案在真实视觉下完全失效——用户截图已证实）
-      ctx.shadowColor = 'rgba(0,0,0,0.9)';
-      ctx.shadowBlur = 8;
+      // 原版白字样式：白字 + 深阴影 + 细描边
+      // （粗黑边方案在小字号下黑边反噬吃掉白字，观感如黑字；恢复原版）
+      ctx.shadowColor = 'rgba(0,0,0,0.7)';
+      ctx.shadowBlur = 6;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(node.poet.name, sx, sy);
       ctx.shadowBlur = 0;
 
-      // 双层黑描边：粗外圈保证任意底色下的边缘锐利
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-      ctx.strokeText(node.poet.name, sx, sy);
-      ctx.lineWidth = 0.6;
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      // 细描边增强可读性（原版 1px）
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
       ctx.strokeText(node.poet.name, sx, sy);
     }
 

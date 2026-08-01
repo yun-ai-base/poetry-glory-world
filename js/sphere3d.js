@@ -798,18 +798,13 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 白字（加浓版）：阴影收敛 + 细黑边加重，让白字更实、边缘更清晰
-      ctx.shadowColor = 'rgba(0,0,0,0.75)';
-      ctx.shadowBlur = 4;
+      // 纯白字 + 白色辉光：不加黑影/黑边，白字加白加亮
+      ctx.shadowColor = 'rgba(255,255,255,0.95)';
+      ctx.shadowBlur = 5;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(node.poet.name, sx, sy);
-      ctx.fillText(node.poet.name, sx, sy); // 二次填充：确保不透明白完全覆盖节点色
+      ctx.fillText(node.poet.name, sx, sy); // 二次填充：白得更实
       ctx.shadowBlur = 0;
-
-      // 细黑描边加重（1.6px / 0.35），白字轮廓更浓更锐
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-      ctx.strokeText(node.poet.name, sx, sy);
     }
 
     // Hover 时额外显示朝代

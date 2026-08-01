@@ -672,13 +672,13 @@
 
         var avgZ = (node.z + target.z) / 2;
         var d = (avgZ + this.radius) / (this.radius * 2);
-        var alpha = Math.max(0.1, 0.5 * (1 - d));
+        var alpha = Math.max(0.14, 0.68 * (1 - d));
 
         ctx.beginPath();
         ctx.moveTo(node.sx, node.sy);
         ctx.lineTo(target.sx, target.sy);
         ctx.strokeStyle = 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',' + alpha + ')';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.6;
         ctx.stroke();
       }
     }
@@ -693,13 +693,13 @@
 
         var avgZ = (na.z + nb.z) / 2;
         var d = (avgZ + this.radius) / (this.radius * 2);
-        var alpha = Math.max(0.08, 0.25 * (1 - d));
+        var alpha = Math.max(0.12, 0.4 * (1 - d));
 
         ctx.beginPath();
         ctx.moveTo(na.sx, na.sy);
         ctx.lineTo(nb.sx, nb.sy);
         ctx.strokeStyle = 'rgba(' + color.r + ',' + color.g + ',' + color.b + ',' + alpha + ')';
-        ctx.lineWidth = 0.5;
+        ctx.lineWidth = 0.9;
         ctx.stroke();
       }
     }
@@ -798,17 +798,17 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 原版白字样式：白字 + 深阴影 + 细描边
-      // （粗黑边方案在小字号下黑边反噬吃掉白字，观感如黑字；恢复原版）
-      ctx.shadowColor = 'rgba(0,0,0,0.7)';
-      ctx.shadowBlur = 6;
+      // 白字（加浓版）：阴影收敛 + 细黑边加重，让白字更实、边缘更清晰
+      ctx.shadowColor = 'rgba(0,0,0,0.75)';
+      ctx.shadowBlur = 4;
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(node.poet.name, sx, sy);
+      ctx.fillText(node.poet.name, sx, sy); // 二次填充：确保不透明白完全覆盖节点色
       ctx.shadowBlur = 0;
 
-      // 细描边增强可读性（原版 1px）
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      // 细黑描边加重（1.6px / 0.35），白字轮廓更浓更锐
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
       ctx.strokeText(node.poet.name, sx, sy);
     }
 

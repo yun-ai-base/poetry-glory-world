@@ -27,9 +27,16 @@
   const modalBody = document.getElementById('modalBody');
   const modalClose = document.getElementById('modalClose');
   const sphereContainer = document.querySelector('.sphere-container');
+  const searchInput = document.getElementById('searchInput');
+  const eraSelect = document.getElementById('eraSelect');
+  const clearFilterBtn = document.getElementById('clearFilter');
 
   let currentTier = '最强王者';
   let sphere = null;
+  // 当前是否有激活的筛选（关键词 / 时代）
+  let filterActive = false;
+  // 当前打开的弹窗诗人（用于导出等）
+  var currentPoet = null;
 
   function getPoetsByTier(tier) {
     return ALL_POETS.filter(function (p) { return p.tier === tier; });
@@ -52,6 +59,91 @@
       }
     }
     return null;
+  }
+
+  // ===== 搜索与筛选 =====
+  /** 关键词匹配：诗人名/朝代/称号/籍贯/名句/技能/流派/团体/关键字 */
+  function matchKeyword(poet, kw) {
+    if (!kw) return true;
+    var pool = [];
+    pool.push(poet.name || '');
+    var bio = poet.basicInfo || {};
+    pool.push(bio.dynasty || '', bio.title || '', bio.hometown || '');
+    (poet.famousQuotes || []).forEach(function (q) { if (q && q.text) pool.push(q.text); });
+    (poet.skills || []).forEach(function (s) {
+      if (!s) return;
+      pool.push(s.name || '');
+      (s.highlights || []).forEach(function (h) { pool.push(h || ''); });
+      if (s.poem) pool.push(s.poem);
+    });
+    var sch = poet.school || {};
+    (sch.style || []).forEach(function (x) { pool.push(x); });
+    (sch.group || []).forEach(function (x) { pool.push(x); });
+    (((poet.keyData || {}).keywords) || []).forEach(function (x) { pool.push(x); });
+    return pool.some(function (t) { return t && t.indexOf(kw) >= 0; });
+  }
+
+  /** 时代匹配：按 dynasty 字段做包含式映射（简化，含"唐"即归隋唐等） */
+  var ERA_RULES = [
+    ['先秦', /战国|楚/],
+    ['两汉', /汉/],
+    ['魏晋南北朝', /魏|晋|南朝|陈|梁|齐/],
+    ['五代', /五代|南唐/],
+    ['隋唐', /隋|唐/],
+    ['宋', /宋/],
+    ['元', /元/],
+    ['明', /明/],
+    ['清', /清/],
+    ['近代', /近代/]
+  ];
+  function matchEra(poet, era) {
+    if (!era || era === '全部') return true;
+    var d = ((poet.basicInfo || {}).dynasty) || '';
+    if (!d) return false;
+    for (var i = 0; i < ERA_RULES.length; i++) {
+      if (ERA_RULES[i][0] === era) return ERA_RULES[i][1].test(d);
+    }
+    return false;
+  }
+
+  /** 应用筛选：有筛选则跨段位显示匹配诗人，否则恢复当前段位 */
+  function applyFilter() {
+    var kw = searchInput ? searchInput.value.trim() : '';
+    var era = eraSelect ? eraSelect.value : '全部';
+    var cfg = getTierConfig(currentTier);
+    filterActive = !!(kw || (era && era !== '全部'));
+
+    if (!filterActive) {
+      var poets = getPoetsByTier(currentTier);
+      if (sphere) sphere.setPoets(poets, cfg.color, cfg.fontFamily);
+      updateFooter(currentTier, poets.length);
+      return;
+    }
+    var filtered = ALL_POETS.filter(function (p) { return matchKeyword(p, kw) && matchEra(p, era); });
+    if (sphere) sphere.setPoets(filtered, cfg.color, cfg.fontFamily);
+    footerInfo.innerHTML = '筛选结果 · 共' + filtered.length + '位诗人';
+    footerInfo.style.color = cfg.color;
+  }
+
+  function clearFilter() {
+    if (searchInput) searchInput.value = '';
+    if (eraSelect) eraSelect.value = '全部';
+    applyFilter();
+  }
+
+  function bindFilterEvents() {
+    if (!searchInput || !eraSelect || !clearFilterBtn) return;
+    var timer = null;
+    searchInput.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(applyFilter, 200);
+    });
+    eraSelect.addEventListener('change', applyFilter);
+    clearFilterBtn.addEventListener('click', clearFilter);
+    // Enter 直接应用（输入法/移动端友好）
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { clearTimeout(timer); applyFilter(); }
+    });
   }
 
   function setActiveTab(tier) {
@@ -101,6 +193,7 @@
   // ===== 详情弹窗 =====
   function showPoetDetail(poet) {
     if (!poet) return;
+    currentPoet = poet;
     var config = getTierConfig(poet.tier);
     var bio = poet.basicInfo || {};
     var years = (bio.birthYear || '不详') + ' — ' + (bio.deathYear || '不详');
@@ -111,6 +204,7 @@
     html += '  <div class="modal-title-row">';
     html += '    <h2 class="modal-poet-name" style="color:' + config.color + '">' + (poet.name || '无名氏') + '</h2>';
     html += '    <span class="modal-poet-title">' + (bio.title || '诗人') + '</span>';
+    html += '    <button class="export-btn" data-action="export-poet" title="导出为 Markdown 文件">导出 ↓</button>';
     html += '  </div>';
     html += '  <div class="modal-bio">';
     html += '    <span class="bio-item"><span class="bio-label">时代</span>' + (bio.dynasty || '不详') + '</span>';
@@ -324,6 +418,137 @@
     if (sphere) sphere.setInteractive(true);
   }
 
+  // ===== 导出 Markdown =====
+  function escMd(s) { return String(s == null ? '' : s).replace(/[\\`*_{}\[\]()#+\-.!|>]/g, function (m) { return '\\' + m; }); }
+
+  function exportPoetMarkdown(poet) {
+    if (!poet) return;
+    var bio = poet.basicInfo || {};
+    var cfg = getTierConfig(poet.tier);
+    var L = [];
+    L.push('# ' + (poet.name || '无名氏') + (bio.title ? ' · ' + bio.title : ''));
+    L.push('');
+    L.push('> ' + (bio.dynasty || '') + ' · ' + (bio.birthYear || '?') + ' — ' + (bio.deathYear || '?') + ' · ' + (bio.hometown || ''));
+    L.push('> 段位：' + (poet.tier || '') + '  ·  配色：' + (cfg.colorName || '') + ' ' + (cfg.color || ''));
+    L.push('');
+    if (bio.description) { L.push(bio.description); L.push(''); }
+
+    // 六维
+    if (poet.stats) {
+      L.push('## 六维数据');
+      L.push('');
+      L.push('| 维度 | 评分 |');
+      L.push('|------|------|');
+      var labels = { literaryInfluence:'文学影响力', artisticAchievement:'艺术成就', innovation:'创新性', popularity:'传唱度', depth:'思想深度', technique:'技法工整' };
+      Object.keys(labels).forEach(function (k) {
+        var v = poet.stats[k];
+        L.push('| ' + labels[k] + ' | ' + (v != null ? v : '不详') + ' |');
+      });
+      L.push('');
+    }
+
+    if (poet.school) {
+      L.push('## 流派阵营');
+      L.push('');
+      if (poet.school.style && poet.school.style.length) L.push('- 风格：' + poet.school.style.join('、'));
+      if (poet.school.group && poet.school.group.length) L.push('- 团体：' + poet.school.group.join('、'));
+      L.push('');
+    }
+
+    if (poet.skills && poet.skills.length) {
+      L.push('## 技能 · 代表作');
+      L.push('');
+      poet.skills.forEach(function (s) {
+        if (!s) return;
+        L.push('### ' + s.name + (s.type ? ' [' + s.type + ']' : ''));
+        if (s.description) L.push('> ' + s.description);
+        if (s.poem) {
+          var poemLines = s.poem.split('。');
+          var hl = s.highlights || [];
+          L.push('');
+          poemLines.forEach(function (l) {
+            l = (l || '').trim();
+            if (!l) return;
+            var isHL = hl.some(function (h) { return h && (l.indexOf(h) >= 0 || h.indexOf(l) >= 0); });
+            L.push('> ' + (isHL ? '**' + l + '。**' : l + '。'));
+          });
+          L.push('');
+        }
+        if (s.highlights && s.highlights.length) {
+          L.push('**名句**：' + s.highlights.map(function (h) { return '「' + h + '」'; }).join(' / '));
+          L.push('');
+        }
+      });
+    }
+
+    if (poet.famousQuotes && poet.famousQuotes.length) {
+      L.push('## 代表诗句');
+      L.push('');
+      poet.famousQuotes.forEach(function (q) {
+        L.push('> 「' + (q.text || '') + '」');
+        L.push('> —— ' + (q.source || ''));
+      });
+      L.push('');
+    }
+
+    if (poet.relationships && poet.relationships.length) {
+      L.push('## 关系网络');
+      L.push('');
+      poet.relationships.forEach(function (r) {
+        L.push('- **' + (r.type || '') + '** ' + (r.target || '') + (r.label ? ' · ' + r.label : ''));
+      });
+      L.push('');
+    }
+
+    if (poet.stories) {
+      if (poet.stories.keywords && poet.stories.keywords.length) {
+        L.push('## 标签');
+        L.push('');
+        L.push(poet.stories.keywords.map(function (k) { return '`' + k + '`'; }).join(' '));
+        L.push('');
+      }
+      if (poet.stories.anecdote) {
+        L.push('## 生平典故选');
+        L.push('');
+        L.push(poet.stories.anecdote);
+        L.push('');
+      }
+    }
+
+    if (poet.keyData) {
+      L.push('## 关键数据');
+      L.push('');
+      if (poet.keyData.extantWorks) L.push('- 存世作品：' + poet.keyData.extantWorks);
+      if (poet.keyData.famousLines) L.push('- 千古名句：' + poet.keyData.famousLines);
+      if (poet.keyData.keywords && poet.keyData.keywords.length) L.push('- 关键词：' + poet.keyData.keywords.join('、'));
+      L.push('');
+    }
+
+    L.push('---');
+    L.push('');
+    L.push('*来自 中国诗词人·荣耀世界 · yun-ai-base.github.io/poetry-glory-world*');
+
+    var md = L.join('\n');
+    var filename = (poet.name || '无名氏') + '.md';
+    filename = filename.replace(/[\\/:*?"<>|]/g, ''); // 清理文件名特殊字符
+    downloadFile(filename, md);
+  }
+
+  function downloadFile(filename, content) {
+    var blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
   // ===== 事件绑定 =====
   tierTabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
@@ -336,8 +561,14 @@
   modalOverlay.addEventListener('click', function (e) {
     if (e.target === modalOverlay) closeModal();
   });
-  // 卡片翻转：事件委托 + 阻止冒泡，避免穿透 overlay 触发 canvas
+  // 卡片翻转 + 导出按钮：事件委托 + 阻止冒泡，避免穿透 overlay 触发 canvas
   modalBody.addEventListener('click', function (e) {
+    var exportBtn = e.target.closest('[data-action="export-poet"]');
+    if (exportBtn) {
+      e.stopPropagation();
+      exportPoetMarkdown(currentPoet);
+      return;
+    }
     var card = e.target.closest('[data-flip-card], [data-flip-quote]');
     if (card) {
       e.stopPropagation();
@@ -414,10 +645,59 @@
     init();
   }
 
+  // 绑定搜索与筛选（脚本在 body 末尾执行，DOM 已就绪）
+  bindFilterEvents();
+
   // 供孪生宇宙弹窗（index.html 内联脚本）同步球体交互状态，
   // 防止弹窗内点击经 window 级 mouseup 误触发诗人节点
   window.__pgw = window.__pgw || {};
   window.__pgw.setSphereInteractive = function (flag) {
     if (sphere) sphere.setInteractive(flag);
   };
+
+  // ===== 主题（浅色 / 暗色）=====
+  var THEME_KEY = 'pgw-theme';
+  function getPreferredTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+    if (saved === 'light' || saved === 'dark') return saved;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    var btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  }
+  function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'light';
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  }
+
+  // 初始化（在 DOMContentLoaded 之前也可，因为 documentElement 已存在）
+  setTheme(getPreferredTheme());
+
+
+  // 绑定切换按钮（在 init 之外，DOM 已就绪）
+  var themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', toggleTheme);
+    themeBtn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); }
+    });
+  }
+
+  // 跟随系统主题变化（仅在用户未显式选择时）
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var listener = function (e) {
+      var saved = null;
+      try { saved = localStorage.getItem(THEME_KEY); } catch (err) {}
+      if (saved !== 'light' && saved !== 'dark') {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    };
+    if (mq.addEventListener) mq.addEventListener('change', listener);
+    else if (mq.addListener) mq.addListener(listener); // 兼容旧 API
+  }
 })();

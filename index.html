@@ -25,6 +25,25 @@
     <button class="tier-tab" data-tier="荣耀黄金">荣耀黄金<br><small>暮山紫</small></button>
   </nav>
 
+  <!-- 搜索与筛选 -->
+  <div class="search-bar" id="searchBar">
+    <input type="search" id="searchInput" placeholder="搜索诗人 / 名句 / 流派 / 团体…" autocomplete="off" aria-label="搜索诗人">
+    <select id="eraSelect" aria-label="按时代筛选">
+      <option value="全部">全部时代</option>
+      <option value="先秦">先秦</option>
+      <option value="两汉">两汉</option>
+      <option value="魏晋南北朝">魏晋南北朝</option>
+      <option value="隋唐">隋唐</option>
+      <option value="五代">五代</option>
+      <option value="宋">宋</option>
+      <option value="元">元</option>
+      <option value="明">明</option>
+      <option value="清">清</option>
+      <option value="近代">近代</option>
+    </select>
+    <button id="clearFilter" class="clear-btn" title="清除筛选" aria-label="清除筛选">✕</button>
+  </div>
+
   <!-- 3D球体 Canvas 容器 -->
   <main class="sphere-container">
     <canvas id="sphereCanvas"></canvas>
@@ -36,6 +55,8 @@
     <span class="footer-info" id="tierInfo">最强王者 · 共10位诗人</span>
     <span class="footer-sep">|</span>
     <span class="footer-twin-btn" onclick="toggleTwin()">🌌 孪生宇宙 <small style="font-size:0.7em;opacity:0.6;font-weight:400">点击见大世界</small></span>
+    <span class="footer-sep">|</span>
+    <span class="theme-toggle" id="themeToggle" role="button" tabindex="0" aria-label="切换主题">🌙</span>
   </footer>
 
   <!-- 详情弹窗 -->
@@ -119,7 +140,7 @@ function buildTwin() {
              + '<div class="twin-section-title">' + info.emoji + ' ' + info.label + '</div>'
              + '<div class="twin-grid">';
         list.forEach(function (s) {
-          html += '<a class="twin-card" href="https://yun-ai-base.github.io/' + encodeURIComponent(s.name) + '/" target="_blank" rel="noopener">'
+          html += '<a class="twin-card" href="https://yun-ai-base.github.io/' + encodeURIComponent(s.name) + '/" target="_blank" rel="noopener noreferrer">'
                + '<span class="twin-card-icon">' + s.icon + '</span>'
                + '<span class="twin-card-info">'
                + '<span class="twin-card-name">' + escHtml(s.name) + '</span>'

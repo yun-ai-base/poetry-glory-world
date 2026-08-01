@@ -1279,8 +1279,8 @@ p {
 }
 
 .header   { animation: pgwFadeDown 0.55s ease both; }
-.tier-tabs { animation: pgwFadeDown 0.55s 0.12s ease both; }
-.footer-bar { animation: pgwFadeUp 0.55s 0.2s ease both; }
+.tier-tabs { animation: pgwFadeDown 0.55s 0.12s ease forwards; }
+.footer-bar { animation: pgwFadeUp 0.55s 0.2s ease forwards; }
 
 /* ---------- Header 增强 ---------- */
 .header {
@@ -1522,4 +1522,336 @@ p {
     font-size: 1.35rem;
     letter-spacing: 3px;
   }
+}
+
+/* ============ v1.2 搜索与筛选栏 ============ */
+.search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(245, 240, 232, 0.65);
+  border-bottom: 1px solid rgba(44, 44, 44, 0.06);
+}
+
+.search-bar input[type="search"] {
+  width: 260px;
+  max-width: 60vw;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(44, 44, 44, 0.16);
+  background: rgba(255, 255, 255, 0.75);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #2C2C2C;
+  outline: none;
+  letter-spacing: 0.5px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.search-bar input[type="search"]::placeholder {
+  color: #B0A898;
+}
+.search-bar input[type="search"]:focus {
+  border-color: rgba(201, 59, 59, 0.45);
+  box-shadow: 0 0 0 3px rgba(201, 59, 59, 0.08);
+}
+
+.search-bar select {
+  padding: 8px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(44, 44, 44, 0.16);
+  background: rgba(255, 255, 255, 0.75);
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #2C2C2C;
+  outline: none;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: border-color 0.25s ease;
+}
+.search-bar select:hover {
+  border-color: rgba(201, 59, 59, 0.35);
+}
+
+.search-bar .clear-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(44, 44, 44, 0.16);
+  background: rgba(255, 255, 255, 0.75);
+  color: #8A8078;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+.search-bar .clear-btn:hover {
+  color: #C93B3B;
+  border-color: rgba(201, 59, 59, 0.4);
+  transform: rotate(90deg);
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .search-bar input[type="search"] {
+    width: 100%;
+    max-width: 100%;
+  }
+  .search-bar select {
+    flex: 1;
+    min-width: 0;
+  }
+  .search-bar .clear-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ============ 主题切换按钮 ============ */
+.footer-bar .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.4);
+  transition: transform 0.3s ease, background 0.25s ease;
+  user-select: none;
+}
+.footer-bar .theme-toggle:hover {
+  background: rgba(201, 59, 59, 0.12);
+  transform: rotate(20deg);
+}
+.footer-bar .theme-toggle:focus-visible {
+  outline: 2px solid rgba(201, 59, 59, 0.5);
+  outline-offset: 2px;
+}
+
+/* ============ 详情导出按钮 ============ */
+.export-btn {
+  background: rgba(201, 59, 59, 0.08);
+  border: 1px solid rgba(201, 59, 59, 0.3);
+  color: #C93B3B;
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 4px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+}
+.export-btn:hover {
+  background: rgba(201, 59, 59, 0.18);
+  color: #A82828;
+  transform: translateY(-1px);
+}
+.export-btn:focus-visible {
+  outline: 2px solid rgba(201, 59, 59, 0.5);
+  outline-offset: 2px;
+}
+
+/* ============ v1.3 暗色主题 ============ */
+[data-theme="dark"] body {
+  background-color: #15161e;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.025) 2px, rgba(255, 255, 255, 0.025) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255, 255, 255, 0.015) 3px, rgba(255, 255, 255, 0.015) 6px);
+}
+[data-theme="dark"] body, [data-theme="dark"] p { color: #d6cebc; }
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4 { color: #f0e8d4; }
+
+[data-theme="dark"] .header {
+  background: linear-gradient(180deg, rgba(28, 30, 44, 0.96), rgba(22, 23, 34, 0.85));
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .site-subtitle { color: #9b9486; }
+[data-theme="dark"] .site-title { text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4); }
+
+[data-theme="dark"] .tier-tabs {
+  background: rgba(26, 28, 42, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .tier-tab { color: #b8b0a0; }
+[data-theme="dark"] .tier-tab:hover { color: #f0e8d4; }
+
+[data-theme="dark"] .search-bar {
+  background: rgba(26, 28, 42, 0.7);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .search-bar input[type="search"] {
+  background: rgba(40, 42, 58, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f0e8d4;
+}
+[data-theme="dark"] .search-bar input[type="search"]::placeholder { color: #7a7466; }
+[data-theme="dark"] .search-bar input[type="search"]:focus {
+  border-color: rgba(231, 175, 110, 0.5);
+  box-shadow: 0 0 0 3px rgba(231, 175, 110, 0.08);
+}
+[data-theme="dark"] .search-bar select {
+  background: rgba(40, 42, 58, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f0e8d4;
+}
+[data-theme="dark"] .search-bar .clear-btn {
+  background: rgba(40, 42, 58, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #9b9486;
+}
+
+[data-theme="dark"] .footer-bar {
+  background: rgba(22, 23, 34, 0.92);
+  border-top-color: rgba(255, 255, 255, 0.06);
+  color: #9b9486;
+}
+[data-theme="dark"] .footer-bar .theme-toggle {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .footer-bar .theme-toggle:hover {
+  background: rgba(231, 175, 110, 0.18);
+}
+[data-theme="dark"] .footer-bar .footer-twin-btn:hover { color: #e7af6e; }
+[data-theme="dark"] .footer-bar .footer-twin-btn:hover { background: rgba(231, 175, 110, 0.08); }
+[data-theme="dark"] .footer-sep { color: #4a4a55; }
+
+[data-theme="dark"] .sphere-container::before {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(231, 175, 110, 0.05), transparent 60%),
+    radial-gradient(circle at 20% 30%, rgba(122, 156, 174, 0.04), transparent 52%),
+    radial-gradient(circle at 80% 66%, rgba(107, 154, 143, 0.04), transparent 50%);
+}
+[data-theme="dark"] .sphere-hint { color: #7a7466; }
+
+[data-theme="dark"] .modal-overlay,
+[data-theme="dark"] .twin-overlay {
+  background: rgba(0, 0, 0, 0.65);
+}
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .twin-panel {
+  background: #1f2030;
+  color: #d6cebc;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .modal-close,
+[data-theme="dark"] .twin-close {
+  color: #9b9486;
+  background: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .modal-close:hover,
+[data-theme="dark"] .twin-close:hover {
+  color: #e7af6e;
+  background: rgba(231, 175, 110, 0.14);
+}
+
+[data-theme="dark"] .modal-poet-title {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b8b0a0;
+}
+[data-theme="dark"] .modal-section-title {
+  color: #f0e8d4;
+  border-bottom-color: rgba(231, 175, 110, 0.25);
+}
+[data-theme="dark"] .modal-section-title::after { background: #e7af6e; }
+[data-theme="dark"] .modal-bio {
+  background: rgba(255, 255, 255, 0.03);
+  color: #b8b0a0;
+}
+[data-theme="dark"] .bio-item .bio-label,
+[data-theme="dark"] .bio-desc { color: #b8b0a0; }
+
+[data-theme="dark"] .keydata-item {
+  background: rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .keydata-label { color: #9b9486; }
+[data-theme="dark"] .keydata-value { color: #f0e8d4; }
+[data-theme="dark"] .keyword-tag {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b8b0a0;
+}
+
+[data-theme="dark"] .modal-skills .skill-card-flip,
+[data-theme="dark"] .quote-flip {
+  background: rgba(40, 42, 58, 0.6);
+  border-left-color: var(--pgw-accent, #C93B3B);
+}
+[data-theme="dark"] .skill-name { color: #f0e8d4; }
+[data-theme="dark"] .skill-comment,
+[data-theme="dark"] .flip-hint { color: #7a7466; }
+[data-theme="dark"] .quote-text { color: #e0d8c4; text-shadow: 0 1px 0 rgba(0,0,0,0.5); }
+[data-theme="dark"] .quote-source,
+[data-theme="dark"] .poem-line { color: #d6cebc; }
+[data-theme="dark"] .poem-line.hl {
+  background: linear-gradient(180deg, transparent 55%, rgba(231, 175, 110, 0.22) 55%);
+  color: #e7af6e;
+}
+[data-theme="dark"] .quote-poem-title { color: #e7af6e; }
+
+[data-theme="dark"] .school-tag {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .relation-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .relation-target { color: #f0e8d4; }
+[data-theme="dark"] .relation-type { color: #9b9486; }
+[data-theme="dark"] .relation-label { color: #7a7466; }
+
+[data-theme="dark"] .story-keyword {
+  background: rgba(40, 42, 58, 0.6);
+  color: #d6cebc;
+  border-color: transparent;
+}
+[data-theme="dark"] .story-anecdote-wrap {
+  background: rgba(255, 255, 255, 0.03);
+  color: #d6cebc;
+}
+
+[data-theme="dark"] .twin-card {
+  background: rgba(40, 42, 58, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .twin-card:hover {
+  background: rgba(231, 175, 110, 0.08);
+  border-color: rgba(231, 175, 110, 0.35);
+  box-shadow: 0 4px 16px rgba(231, 175, 110, 0.12);
+}
+[data-theme="dark"] .twin-card-name { color: #f0e8d4; }
+[data-theme="dark"] .twin-card-desc { color: #9b9486; }
+[data-theme="dark"] .twin-card-arrow { color: #6a6855; }
+[data-theme="dark"] .twin-card:hover .twin-card-arrow { color: #e7af6e; }
+[data-theme="dark"] .twin-section-title {
+  color: #f0e8d4;
+  border-bottom-color: rgba(231, 175, 110, 0.2);
+}
+[data-theme="dark"] .twin-header h2 { color: #f0e8d4; }
+[data-theme="dark"] .twin-subtitle { color: #9b9486; }
+[data-theme="dark"] .twin-card-icon { background: rgba(255, 255, 255, 0.06); }
+[data-theme="dark"] .twin-fallback { color: #9b9486; }
+
+[data-theme="dark"] .modal-body::-webkit-scrollbar-thumb,
+[data-theme="dark"] .twin-body::-webkit-scrollbar-thumb,
+[data-theme="dark"] .card-back::-webkit-scrollbar-thumb,
+[data-theme="dark"] .quote-back::-webkit-scrollbar-thumb {
+  background: rgba(231, 175, 110, 0.25);
+}
+
+[data-theme="dark"] .export-btn {
+  background: rgba(231, 175, 110, 0.15);
+  border-color: rgba(231, 175, 110, 0.4);
+  color: #e7af6e;
 }

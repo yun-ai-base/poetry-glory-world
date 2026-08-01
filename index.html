@@ -61,7 +61,9 @@
   </div>
 
   <!-- 脚本 -->
+  <script src="js/utils.js"></script>
   <script src="js/poets-data.js"></script>
+  <script src="js/poets-extra.js"></script>
   <script src="js/sphere3d.js"></script>
   <script src="js/radar-chart.js"></script>
   <script src="js/app.js"></script>
@@ -80,9 +82,12 @@ var twinBuilt = false;
 
 function toggleTwin() {
   var v = document.getElementById('twinView');
+  var willOpen = !v.classList.contains('open');
   v.classList.toggle('open');
-  document.body.style.overflow = v.classList.contains('open') ? 'hidden' : '';
-  if (v.classList.contains('open') && !twinBuilt) {
+  document.body.style.overflow = willOpen ? 'hidden' : '';
+  // 弹窗打开时关闭球体交互，防止点击穿透误触发诗人节点
+  if (window.__pgw) window.__pgw.setSphereInteractive(!willOpen);
+  if (willOpen && !twinBuilt) {
     twinBuilt = true;
     buildTwin();
   }
@@ -90,10 +95,16 @@ function toggleTwin() {
 
 function buildTwin() {
   var container = document.getElementById('twinContainer');
+  function fail() {
+    if (container) {
+      container.innerHTML = '<div class="twin-fallback">🌫 其他项目暂时无法加载（网络或服务异常）</div>';
+    }
+  }
   var xhr = new XMLHttpRequest();
   xhr.open('GET', PROJECTS_URL, true);
+  xhr.timeout = 8000;
   xhr.onload = function () {
-    if (xhr.status !== 200) return;
+    if (xhr.status !== 200) { fail(); return; }
     try {
       var all = JSON.parse(xhr.responseText);
       var projects = all.filter(function (p) { return p.name !== SELF_PROJECT; });
@@ -119,9 +130,11 @@ function buildTwin() {
         });
         html += '</div></div>';
       });
-      container.innerHTML = html;
-    } catch (e) {}
+      container.innerHTML = html || '<div class="twin-fallback">暂未发现其他项目</div>';
+    } catch (e) { fail(); }
   };
+  xhr.onerror = fail;
+  xhr.ontimeout = fail;
   xhr.send();
 }
 

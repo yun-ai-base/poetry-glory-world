@@ -15,12 +15,13 @@
   'use strict';
 
   /**
-   * 将十六进制颜色转为 rgba 字符串
+   * 十六进制颜色转为 rgba 字符串（复用共享工具，缺失时本地兜底）
    * @param {string} hex - 六位十六进制色值，如 '#C93B3B'
    * @param {number} alpha - 透明度 0-1
    * @returns {string}
    */
   function hexToRgba(hex, alpha) {
+    if (window.PGW) return window.PGW.colorWithAlpha(hex, alpha);
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -123,7 +124,7 @@
         }
       }
       ctx.closePath();
-      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.strokeStyle = 'rgba(44,44,44,0.08)';
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -137,7 +138,7 @@
       ctx.beginPath();
       ctx.moveTo(center, center);
       ctx.lineTo(endX, endY);
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.strokeStyle = 'rgba(44,44,44,0.12)';
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -145,7 +146,7 @@
     // ================================================================
     // 3. 绘制刻度标注（沿第一条轴线标注 2,4,6,8,10）
     // ================================================================
-    ctx.fillStyle = '#999';
+    ctx.fillStyle = '#B0A898';
     ctx.font = '10px "PingFang SC","Microsoft YaHei",sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -249,7 +250,7 @@
       var lx = center + (radius + labelOffset) * Math.cos(ang);
       var ly = center + (radius + labelOffset) * Math.sin(ang);
 
-      ctx.fillStyle = '#555555';
+      ctx.fillStyle = '#6A6460';
       ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
 
       // ---- 文字水平对齐 ----

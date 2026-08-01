@@ -12,6 +12,11 @@
     '荣耀黄金': { color: '#8B7D9A', lightColor: '#D8D0E4', label: '荣耀黄金', colorName: '暮山紫', fontFamily: '"PingFang SC", "Microsoft YaHei", sans-serif' }
   };
 
+  // 数据源 = 基础数据（poets-data.js）+ 分类扩充（poets-extra.js），任一缺失仍可用另一
+  // 注意：两者均为 const 全局声明，不在 window 对象上，须用 typeof 判断
+  var ALL_POETS = (typeof POETS_DATA !== 'undefined' ? POETS_DATA : [])
+    .concat(typeof POETS_EXTRA !== 'undefined' ? POETS_EXTRA : []);
+
   const canvas = document.getElementById('sphereCanvas');
   const tierTabs = document.querySelectorAll('.tier-tab');
   const tierTabsNav = document.getElementById('tierTabs');
@@ -27,7 +32,7 @@
   let sphere = null;
 
   function getPoetsByTier(tier) {
-    return POETS_DATA.filter(function (p) { return p.tier === tier; });
+    return ALL_POETS.filter(function (p) { return p.tier === tier; });
   }
 
   function getTierConfig(tier) {
@@ -36,19 +41,15 @@
 
   /** 根据名句的 source 找到关联 skill（获取完整诗文） */
   function findQuoteSkill(poet, quote) {
-    if (!poet.skills) return null;
-    var target = quote.source.replace(/[《》]/g, '');
-    // 精确匹配
+    if (!poet.skills || !quote) return null;
+    var target = (quote.source || '').replace(/[《》]/g, '');
+    if (!target) return null;
+    // 单遍匹配：精确 > 前缀（"声声慢"→"声声慢·寻寻觅觅"）> 互相包含（"饮酒·其五"→"饮酒（其五）"）
     for (var i = 0; i < poet.skills.length; i++) {
-      if (poet.skills[i].name === target) return poet.skills[i];
-    }
-    // 前缀匹配（处理"声声慢"→"声声慢·寻寻觅觅"）
-    for (var i = 0; i < poet.skills.length; i++) {
-      if (poet.skills[i].name.startsWith(target)) return poet.skills[i];
-    }
-    // 包容匹配（处理"饮酒·其五"→"饮酒（其五）"）
-    for (var i = 0; i < poet.skills.length; i++) {
-      if (poet.skills[i].name.indexOf(target) >= 0 || target.indexOf(poet.skills[i].name) >= 0) return poet.skills[i];
+      var name = poet.skills[i].name;
+      if (name === target || name.indexOf(target) >= 0 || target.indexOf(name) >= 0) {
+        return poet.skills[i];
+      }
     }
     return null;
   }
@@ -82,7 +83,10 @@
     currentTier = tier;
     var poets = getPoetsByTier(tier);
     var config = getTierConfig(tier);
-    if (!poets || poets.length === 0) { return; }
+    if (!poets || poets.length === 0) {
+      footerInfo.innerHTML = tier + ' · 暂无诗人';
+      return;
+    }
     setActiveTab(tier);
     updateFooter(tier, poets.length);
     if (!sphere) {
@@ -96,23 +100,24 @@
 
   // ===== 详情弹窗 =====
   function showPoetDetail(poet) {
+    if (!poet) return;
     var config = getTierConfig(poet.tier);
-    var bio = poet.basicInfo;
-    var years = bio.birthYear + ' — ' + bio.deathYear;
+    var bio = poet.basicInfo || {};
+    var years = (bio.birthYear || '不详') + ' — ' + (bio.deathYear || '不详');
     var html = '';
 
     // 头部
     html += '<div class="modal-section modal-header-section">';
     html += '  <div class="modal-title-row">';
-    html += '    <h2 class="modal-poet-name" style="color:' + config.color + '">' + poet.name + '</h2>';
-    html += '    <span class="modal-poet-title">' + bio.title + '</span>';
+    html += '    <h2 class="modal-poet-name" style="color:' + config.color + '">' + (poet.name || '无名氏') + '</h2>';
+    html += '    <span class="modal-poet-title">' + (bio.title || '诗人') + '</span>';
     html += '  </div>';
     html += '  <div class="modal-bio">';
-    html += '    <span class="bio-item"><span class="bio-label">时代</span>' + bio.dynasty + '</span>';
+    html += '    <span class="bio-item"><span class="bio-label">时代</span>' + (bio.dynasty || '不详') + '</span>';
     html += '    <span class="bio-item"><span class="bio-label">生卒</span>' + years + '</span>';
-    html += '    <span class="bio-item"><span class="bio-label">籍贯</span>' + bio.hometown + '</span>';
-    html += '    <span class="bio-item"><span class="bio-label">段位</span><span class="tier-badge" style="background:' + config.color + '">' + poet.tier + '</span></span>';
-    html += '    <p class="bio-desc">' + bio.description + '</p>';
+    html += '    <span class="bio-item"><span class="bio-label">籍贯</span>' + (bio.hometown || '不详') + '</span>';
+    html += '    <span class="bio-item"><span class="bio-label">段位</span><span class="tier-badge" style="background:' + config.color + '">' + (poet.tier || '未定级') + '</span></span>';
+    html += '    <p class="bio-desc">' + (bio.description || '') + '</p>';
     html += '  </div>';
     html += '</div>';
 
@@ -205,20 +210,21 @@
 
     // 代表诗句（合并 famousQuotes + skill 高亮句，全部展示可翻转看全文）
     var expandedQuotes = [];
+    var seenQuotes = {};
     if (poet.famousQuotes) {
-      poet.famousQuotes.forEach(function (q) { expandedQuotes.push(q); });
+      poet.famousQuotes.forEach(function (q) {
+        if (!q || !q.text) return;
+        seenQuotes[q.text] = true;
+        expandedQuotes.push(q);
+      });
     }
     if (poet.skills) {
       poet.skills.forEach(function (s) {
         if (!s.highlights) return;
         s.highlights.forEach(function (h) {
-          var dup = false;
-          for (var eq = 0; eq < expandedQuotes.length; eq++) {
-            if (expandedQuotes[eq].text === h) { dup = true; break; }
-          }
-          if (!dup) {
-            expandedQuotes.push({ text: h, source: '《' + s.name + '》', _skill: s });
-          }
+          if (seenQuotes[h]) return; // 与已有名句去重
+          seenQuotes[h] = true;
+          expandedQuotes.push({ text: h, source: '《' + s.name + '》', _skill: s });
         });
       });
     }
@@ -228,7 +234,7 @@
       html += '  <div class="modal-quotes">';
       expandedQuotes.forEach(function (q) {
         var skill = q._skill || findQuoteSkill(poet, q);
-        var sourceClean = q.source.replace(/[《》]/g, '');
+        var sourceClean = (q.source || '佚名出处').replace(/[《》]/g, '');
         html += '  <div class="quote-flip" data-flip-quote style="border-left-color:' + config.color + '">';
         // 正面
         html += '    <div class="quote-front">';
@@ -299,6 +305,8 @@
     modalOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
     canvas.style.pointerEvents = 'none';
+    // 关闭球体指针交互，杜绝弹窗内点击通过 window 级 mouseup 误触发节点
+    if (sphere) sphere.setInteractive(false);
 
     setTimeout(function () {
       var radarCanvas = document.getElementById('radarCanvas');
@@ -312,6 +320,8 @@
     modalOverlay.classList.remove('active');
     document.body.style.overflow = '';
     canvas.style.pointerEvents = '';
+    // 恢复球体交互
+    if (sphere) sphere.setInteractive(true);
   }
 
   // ===== 事件绑定 =====
@@ -344,11 +354,41 @@
     resizeTimer = setTimeout(function () { if (sphere) sphere.resize(); }, 200);
   });
 
+  /**
+   * 数据自检：重复名字 / 重复 globalId / 非法段位 / 空条目
+   * 仅输出警告，不阻塞运行；用于数据扩充后的质量保障
+   */
+  function validateData(list) {
+    var seenName = {}, seenId = {}, validTiers = Object.keys(TIER_CONFIG), issues = 0;
+    (list || []).forEach(function (p) {
+      if (!p || !p.name) { issues++; console.warn('[数据自检] 存在无名条目'); return; }
+      if (seenName[p.name]) { issues++; console.warn('[数据自检] 重复诗人名：' + p.name); }
+      seenName[p.name] = true;
+      if (p.globalId != null) {
+        if (seenId[p.globalId]) { issues++; console.warn('[数据自检] 重复 globalId：' + p.globalId); }
+        seenId[p.globalId] = true;
+      }
+      if (p.tier && validTiers.indexOf(p.tier) < 0) { issues++; console.warn('[数据自检] 未知段位：' + p.name + ' -> ' + p.tier); }
+    });
+    if (issues) console.warn('[数据自检] 共发现 ' + issues + ' 个问题');
+    else console.log('[数据自检] 数据完整，通过');
+    return issues;
+  }
+
   function init() {
     console.log('中国诗词人荣耀世界 v1.0');
     if (!canvas) return;
-    if (!POETS_DATA || !POETS_DATA.length) return;
+    if (!ALL_POETS || !ALL_POETS.length) {
+      var emptyHint = document.getElementById('sphereHint');
+      if (emptyHint) {
+        emptyHint.textContent = '暂无诗人数据';
+        emptyHint.classList.add('show');
+      }
+      footerInfo.innerHTML = '数据加载失败';
+      return;
+    }
     if (typeof PoetSphere !== 'function') return;
+    validateData(ALL_POETS);
     try {
       switchTier('最强王者');
       setTimeout(function () {
@@ -373,4 +413,11 @@
   } else {
     init();
   }
+
+  // 供孪生宇宙弹窗（index.html 内联脚本）同步球体交互状态，
+  // 防止弹窗内点击经 window 级 mouseup 误触发诗人节点
+  window.__pgw = window.__pgw || {};
+  window.__pgw.setSphereInteractive = function (flag) {
+    if (sphere) sphere.setInteractive(flag);
+  };
 })();

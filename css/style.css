@@ -1232,3 +1232,294 @@ p {
     font-size: 0.75rem;
   }
 }
+
+/* =============================================================
+   v1.1 视觉增强 + 移动端升级（覆盖 / 补充）
+   ============================================================= */
+
+/* ---------- 全局质感 ---------- */
+::selection {
+  background: rgba(201, 59, 59, 0.18);
+  color: #1A1A1A;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 自定义滚动条（弹窗内） */
+.modal-body::-webkit-scrollbar,
+.twin-body::-webkit-scrollbar,
+.card-back::-webkit-scrollbar,
+.quote-back::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-body::-webkit-scrollbar-thumb,
+.twin-body::-webkit-scrollbar-thumb,
+.card-back::-webkit-scrollbar-thumb,
+.quote-back::-webkit-scrollbar-thumb {
+  background: rgba(201, 59, 59, 0.25);
+  border-radius: 3px;
+}
+.modal-body::-webkit-scrollbar-track,
+.twin-body::-webkit-scrollbar-track,
+.card-back::-webkit-scrollbar-track,
+.quote-back::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- 入场动画 ---------- */
+@keyframes pgwFadeDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pgwFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.header   { animation: pgwFadeDown 0.55s ease both; }
+.tier-tabs { animation: pgwFadeDown 0.55s 0.12s ease both; }
+.footer-bar { animation: pgwFadeUp 0.55s 0.2s ease both; }
+
+/* ---------- Header 增强 ---------- */
+.header {
+  padding: 40px 20px 26px;
+  background: linear-gradient(180deg, rgba(250, 246, 238, 0.98), rgba(245, 240, 232, 0.86));
+}
+
+.site-title {
+  display: inline-block;
+  position: relative;
+  padding: 0 14px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* 标题两侧雅致细线 */
+.site-title::before,
+.site-title::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 36px;
+  height: 1px;
+}
+.site-title::before {
+  right: 100%;
+  background: linear-gradient(90deg, transparent, rgba(201, 59, 59, 0.45));
+}
+.site-title::after {
+  left: 100%;
+  background: linear-gradient(90deg, rgba(201, 59, 59, 0.45), transparent);
+}
+
+/* ---------- Tier Tabs 滑块质感 ---------- */
+.tier-bg-slider {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.tier-tab small {
+  letter-spacing: 2px;
+}
+
+/* ---------- 球体容器星云氛围 ---------- */
+.sphere-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(201, 59, 59, 0.05), transparent 60%),
+    radial-gradient(circle at 20% 30%, rgba(45, 125, 181, 0.05), transparent 52%),
+    radial-gradient(circle at 80% 66%, rgba(107, 154, 143, 0.05), transparent 50%);
+}
+
+/* ---------- Modal 质感 ---------- */
+.modal-content,
+.twin-panel {
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 24px 70px rgba(44, 44, 44, 0.30), 0 0 0 1px rgba(44, 44, 44, 0.04);
+}
+
+.modal-header-section {
+  position: relative;
+}
+/* 姓名下方雅致分隔 */
+.modal-header-section::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 3px;
+  margin: 16px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(201, 59, 59, 0.55), transparent);
+  border-radius: 2px;
+}
+
+.modal-poet-name {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.modal-section-title {
+  letter-spacing: 3px;
+}
+
+/* ---------- 卡片增强 ---------- */
+.skill-card-flip,
+.quote-flip {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.skill-card-flip:hover,
+.quote-flip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(44, 44, 44, 0.10);
+}
+
+.card-front,
+.card-back,
+.quote-front,
+.quote-back {
+  border-radius: 0 8px 8px 0;
+}
+
+.flip-hint {
+  transition: color 0.3s ease;
+}
+.skill-card-flip:hover .flip-hint,
+.quote-flip:hover .flip-hint {
+  color: #C93B3B;
+}
+
+/* 翻转卡在移动端禁止长按选中 */
+.skill-card-flip,
+.quote-flip {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 名句正文引号强调 */
+.quote-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- 流派 / 关系 / 故事微调 ---------- */
+.school-tag {
+  background: rgba(255, 255, 255, 0.65);
+  transition: all 0.25s ease;
+}
+.school-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(44, 44, 44, 0.08);
+}
+
+.relation-item {
+  border: 1px solid rgba(44, 44, 44, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 3px rgba(44, 44, 44, 0.04);
+}
+.relation-item:hover {
+  box-shadow: 0 4px 12px rgba(44, 44, 44, 0.10);
+}
+
+.story-keyword {
+  box-shadow: 0 1px 2px rgba(44, 44, 44, 0.05);
+}
+
+/* ---------- Footer 孪生宇宙入口 ---------- */
+.footer-twin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  transition: all 0.25s ease;
+}
+.footer-twin-btn:hover {
+  background: rgba(201, 59, 59, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ---------- 孪生宇宙降级提示 ---------- */
+.twin-fallback {
+  padding: 30px 16px;
+  text-align: center;
+  color: #8A8078;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+/* ============ v1.1 移动端适配升级 ============ */
+@media (max-width: 768px) {
+
+  /* 弹窗顶部/底部安全区 */
+  .modal-content {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .twin-panel {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 关闭按钮增大触控区域 */
+  .modal-close,
+  .twin-close {
+    width: 40px;
+    height: 40px;
+    font-size: 1.15rem;
+  }
+
+  /* 弹窗内容更大字号更易读 */
+  .modal-body {
+    font-size: 0.92rem;
+  }
+  .quote-text {
+    font-size: 1.05rem;
+  }
+  .poem-line {
+    font-size: 0.95rem;
+  }
+
+  /* 底部操作条安全区 */
+  .footer-bar {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  /* 球体容器留出底部操作条空间 */
+  .sphere-container {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+  }
+
+  /* 弹窗出现更跟手 */
+  .modal-overlay.active .modal-content {
+    animation-duration: 0.3s;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .header {
+    padding: 26px 12px 18px;
+  }
+  .site-title {
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+  }
+  .site-title::before,
+  .site-title::after {
+    width: 20px;
+  }
+
+  /* 技能卡在窄屏下单列，卡片更矮更易读 */
+  .skill-card-flip {
+    min-height: 96px;
+  }
+
+  .modal-skills {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-poet-name {
+    font-size: 1.35rem;
+    letter-spacing: 3px;
+  }
+}

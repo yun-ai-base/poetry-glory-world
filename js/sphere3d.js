@@ -34,17 +34,21 @@
     return points;
   }
 
-  /** 十六进制 -> RGB分量 */
+  /** 十六进制 -> RGB 分量（优先用共享工具，缺失时本地兜底） */
   function parseColor(hex) {
-    var c = hex.replace('#', '');
-    if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+    if (window.PGW) return window.PGW.parseColor(hex);
+    var c = String(hex || '').replace('#', '');
+    if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
     var n = parseInt(c, 16);
-    return { r: (n>>16)&255, g: (n>>8)&255, b: n&255 };
+    if (isNaN(n)) return { r: 0, g: 0, b: 0 };
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
+  /** 十六进制 + alpha -> rgba() 字符串（优先用共享工具） */
   function colorWithAlpha(hex, alpha) {
+    if (window.PGW) return window.PGW.colorWithAlpha(hex, alpha);
     var c = parseColor(hex);
-    return 'rgba('+c.r+','+c.g+','+c.b+','+Math.max(0,Math.min(1,alpha))+')';
+    return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + Math.max(0, Math.min(1, alpha)) + ')';
   }
 
   // ============================================================
@@ -89,6 +93,8 @@
     this._proximityEdges = null;
     // 事件
     this._handlers = {};
+    // 交互开关（弹窗打开时关闭，防止 window 级 mouseup 穿透误触发点击）
+    this._interactive = true;
     // 缩放
     this._pinchDist = 0;
     this._pinchRadius = 0;
@@ -231,6 +237,20 @@
     this._clickCb = cb;
   };
 
+  /**
+   * 启用/禁用球体指针交互。
+   * 弹窗打开时必须设为 false：球体的 mouseup 监听挂在 window 上，
+   * 弹窗内的点击会冒泡到 window 并命中背后节点，导致信息被误切换。
+   * @param {boolean} flag
+   */
+  PoetSphere.prototype.setInteractive = function (flag) {
+    this._interactive = !!flag;
+    if (!this._interactive) {
+      this._dragging = false;
+      this.hoveredNode = null;
+    }
+  };
+
   PoetSphere.prototype.resize = function () {
     this._initSize();
     this._initNodes();
@@ -345,6 +365,7 @@
   };
 
   PoetSphere.prototype._onDown = function (pos) {
+    if (!this._interactive) return;
     this._dragging = true;
     this._dragStartX = pos.x;
     this._dragStartY = pos.y;
@@ -357,6 +378,7 @@
   };
 
   PoetSphere.prototype._onMove = function (pos) {
+    if (!this._interactive) return;
     if (this._dragging) {
       var dx = pos.x - this._dragStartX;
       var dy = pos.y - this._dragStartY;
@@ -372,6 +394,9 @@
   };
 
   PoetSphere.prototype._onUp = function (pos) {
+    // 关键守卫：弹窗打开时 window 级 mouseup 仍会触发这里，
+    // 必须直接返回，避免命中背后节点误切换诗人
+    if (!this._interactive) return;
     if (pos && this._dragDist < 6) {
       this._handleClick(pos.x, pos.y);
     }
@@ -383,6 +408,7 @@
   // Hover / 点击
   // ==========================================================
   PoetSphere.prototype._updateHover = function (mx, my) {
+    if (!this._interactive) return;
     var found = null;
     // 从最近到最远检测（sortedNodes末尾=最近）
     var sorted = this._sortedNodes;
@@ -401,7 +427,7 @@
   };
 
   PoetSphere.prototype._handleClick = function (mx, my) {
-    if (!this._clickCb) return;
+    if (!this._interactive || !this._clickCb) return;
     var sorted = this._sortedNodes;
     for (var i = sorted.length - 1; i >= 0; i--) {
       var node = sorted[i];
@@ -496,18 +522,7 @@
     var segments = 60;
     var rings = 3; // 纬线层数
 
-    // 统一旋转+投影一个3D点
-    function project(x, y, z) {
-      var ry = rotateY(x, z, this.rotationY);
-      var rx = rotateX(y, ry[1], this.rotationX);
-      var scale = focal / (focal + rx[1] + R);
-      return {
-        sx: cx + ry[0] * scale,
-        sy: cy + rx[0] * scale,
-        z: rx[1]
-      };
-    }
-    // bind this for project
+    // bind this for drawRing
     var self = this;
 
     function drawRing(points3d) {
